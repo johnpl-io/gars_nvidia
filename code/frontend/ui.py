@@ -153,7 +153,7 @@ with gr.Blocks(theme=theme) as demo:
     with gr.Row():
         with gr.Tab("Initial Setup", visible=True) as initial_setup:
             iteration_count = gr.Slider(
-                label="Iteration Count", value=10, minimum=10, maximum=100, step=1
+                label="Iteration Count", value=15, minimum=10, maximum=100, step=1
             )
             with gr.Accordion("Advanced Preferences (optional)", open=False):
                 gr.Markdown("Selection Preferences")

@@ -4,7 +4,7 @@ generate images that are catered toward their preferences or allow them to explo
 GARS works as a generative image diffusion model design tool. GARS takes advantage of fast 
 SDXL (Stable Diffusion XL) Lightning models and CPU offloading to allow for seamless use 
 on a Nvidia RTX 3070 Ti. 
-- The workflow begins by allowing users to start a recommendation session by offering optional preferences and or model configuration. 
+- The workflow begins by allowing users to start a recommendation session by offering optional preferences, model configuration, iteration count (We noticed that around 15-25 works optimally). 
 Once the user commences the recommendation session, images will appear on the screen in which the user rates from (-1 to 1). 
 Users can optionally provide additional control to the recommendation by adjusting prompt element weights and freezing elements entirely. After the session is done, 
 a gallery view of all the generated images is provided.
@@ -18,7 +18,7 @@ https://github.com/krea-ai/open-prompts and through our own input. GARS offers t
 - Clone the project and add OPENAI_API_KEY as a secret. Note: the OpenAI() api was used to create embeddings for preferences and not 
 for image generation. In addition, there is a gars.db container that contains word embeddings created using OpenAI's API.
 This was done to not make the user load word embeddings into the database manually. 
-- If anything fails with loading the database, you can manually run python3 -m db.init_db within code to take embeddings contained within a .npy file and load them into the database.
+- If anything fails with loading the database, you can manually run python3 -m db.init_db within gars_nvidia/code to take embeddings contained within a .npy file and load them into the database.
 - Go to Applications and start up the Gars-frotend. From there you join the Gradio frontend from a 
 web browser and use GARS accordingly. *Note the first time may take a while for the diffusion model to download
 from Hugging Face, but subsequent launches should be much faster.

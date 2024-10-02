@@ -6,11 +6,6 @@ from db.vector_db_manager import VectorDBManager
 import numpy as np
 from typing import List
 import time
-from dotenv import load_dotenv
-
-env_path = os.path.join("..", ".env")
-
-load_dotenv(dotenv_path=env_path)
 
 
 class ArtRecSystem(GenRecSystem):
