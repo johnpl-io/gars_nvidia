@@ -85,12 +85,30 @@ environment:
       name: ""
       target: ""
 execution:
-  apps: []
+  apps:
+  - name: gars-frontend
+    type: custom
+    class: webapp
+    start_command: cd /project/code && PROXY_PREFIX=$PROXY_PREFIX python3 -m frontend.ui
+    health_check_command: curl -f "http://localhost:8080/"
+    stop_command: pkill -f '^python3 -m frontend.ui'
+    user_msg: ""
+    logfile_path: ""
+    timeout_seconds: 60
+    icon_url: ""
+    webapp_options:
+      autolaunch: false
+      port: "8080"
+      proxy:
+        trim_prefix: false
+      url: http://localhost:8080/
   resources:
     gpu:
       requested: 1
-    sharedMemoryMB: 1024
-  secrets: []
+    sharedMemoryMB: 4096
+  secrets:
+  - variable: OPENAI_API_KEY
+    description: ""
   mounts:
   - type: project
     target: /project/

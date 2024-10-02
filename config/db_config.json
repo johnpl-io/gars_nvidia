@@ -1,0 +1,14 @@
+{
+    "metric_type": "IP",
+    "embedding_size": 1536,
+    "model": "text-embedding-3-small",
+    "prompt_elements": [
+        "modifiers",
+        "subjects",
+        "art_mediums",
+        "artists_movements",
+        "modifiers",
+        "modifiers"
+    ],
+    "initialize_weight": 5
+}
