@@ -9,8 +9,8 @@ from rec_system.minidiffusionpipeline import MiniDiffusionPipeline
 class GenRecSystem(ABC):
     """
     An abstract class for a generative recommendation system that uses a diffusion pipeline
-    to generate recommendations based on user preferences. Subclasses should define specific 
-    variables and implement the abstract `__call__` method to customize the recommendation 
+    to generate recommendations based on user preferences. Subclasses should define specific
+    variables and implement the abstract `__call__` method to customize the recommendation
     process.
     """
 
@@ -26,7 +26,7 @@ class GenRecSystem(ABC):
         max_jump: float,
         user_sample_stage_size: int,
         diffusion_steps: int,
-        dummy: bool
+        dummy: bool,
     ) -> None:
         """
         Initializes the recommendation system with user preferences and configurations.
@@ -42,7 +42,7 @@ class GenRecSystem(ABC):
             diffusion_steps (int): Number of steps for diffusion-based image generation.
             dummy (bool): Whether to use a dummy model for testing.
         """
-        
+
         # Initialize core parameters and variables for recommendation process
         self._iteration = 0
         self._decay_rate = decay_rate
@@ -69,11 +69,13 @@ class GenRecSystem(ABC):
             self._update_frozen_elements()
 
         # Initialize the diffusion pipeline for image generation
-        self.diffusion_pipeline = MiniDiffusionPipeline(diffusion_steps, mock=dummy)
+        self.diffusion_pipeline = MiniDiffusionPipeline(
+            diffusion_steps, mock=dummy
+        )
 
     def _update_frozen_elements(self):
         """
-        Updates prompt elements and weights based on frozen elements, ensuring that 
+        Updates prompt elements and weights based on frozen elements, ensuring that
         frozen elements remain unchanged in recommendations.
         """
         for key, value in self._frozen_elements.items():
@@ -114,7 +116,7 @@ class GenRecSystem(ABC):
                 # If user provides preferences, no needed for sampling stage
                 self._user_sample_stage_size = 0
                 embedding = np.asarray(response.data[0].embedding)
-                # Initialize the user's latent vector as a combination of the embeddings 
+                # Initialize the user's latent vector as a combination of the embeddings
                 # obtained from their preferences
                 self._cur_user_embedding[index] += (
                     embedding * self._params["initialize_weight"]
@@ -142,7 +144,7 @@ class GenRecSystem(ABC):
 
     def _get_num_neighbors(self, total: int) -> int:
         """
-        Determines the number of neighbors to sample in the current iteration, adjusting 
+        Determines the number of neighbors to sample in the current iteration, adjusting
         based on the current stage of sampling and decay rate.
 
         Args:
@@ -161,10 +163,13 @@ class GenRecSystem(ABC):
 
     @abstractmethod
     def __call__(
-        self, rating: float, freeze_elements: List[str], preference_weights: List[float]
+        self,
+        rating: float,
+        freeze_elements: List[str],
+        preference_weights: List[float],
     ) -> str:
         """
-        Abstract method for handling the recommendation process, requiring subclasses to 
+        Abstract method for handling the recommendation process, requiring subclasses to
         implement specific behavior.
 
         Args:

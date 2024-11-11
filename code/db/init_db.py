@@ -3,7 +3,7 @@ from tqdm import tqdm
 import numpy as np
 import json
 import os
-from pymilvus import MilvusClient, Collection, connections
+from pymilvus import Collection, connections
 
 
 def generate_embedding_api(client, text, model):
@@ -40,7 +40,7 @@ def load_embedding(index, embedding_path):
 
 def export_collection(db_client, collection_name, file_name, params):
     """
-    Exports data from a text file into a Milvus collection, associating each text entry 
+    Exports data from a text file into a Milvus collection, associating each text entry
     with a pre-generated embedding.
 
     Args:
@@ -72,9 +72,13 @@ def export_collection(db_client, collection_name, file_name, params):
 
     # Insert data and corresponding embeddings into the Milvus collection
     with open(file_name, "r") as f:
-        for index, line in tqdm(enumerate(f), desc=f"Inserting data into {collection_name}"):
+        for index, line in tqdm(
+            enumerate(f), desc=f"Inserting data into {collection_name}"
+        ):
             embedding = load_embedding(index, embedding_path)
-            data = [{"id": index, "vector": embedding, "plain_text": line.strip()}]
+            data = [
+                {"id": index, "vector": embedding, "plain_text": line.strip()}
+            ]
             db_client.insert(collection_name=collection_name, data=data)
 
         # Connect to the default database alias and flush to ensure all entries are saved
@@ -85,7 +89,7 @@ def export_collection(db_client, collection_name, file_name, params):
 
 def load_db():
     """
-    Initializes the Milvus database by creating collections and populating them with data 
+    Initializes the Milvus database by creating collections and populating them with data
     and pre-generated embeddings.
 
     Steps:
@@ -110,9 +114,7 @@ def load_db():
             "plain_text",
             collection_name + ".txt",
         )
-        export_collection(
-            db_client, collection_name, prompt_file_name, params
-        )
+        export_collection(db_client, collection_name, prompt_file_name, params)
 
 
 if __name__ == "__main__":

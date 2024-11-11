@@ -8,7 +8,7 @@ import numpy as np
 class VectorDBManager:
     """
     A manager class for handling vector operations in a Milvus database.
-    
+
     This class provides methods for retrieving, searching, and managing vectors
     in various collections within a Milvus database, such as finding vectors by
     ID, searching for nearest neighbors, and listing collections.
@@ -20,14 +20,14 @@ class VectorDBManager:
     def __init__(self):
         """
         Initializes the VectorDBManager by loading database configuration parameters.
-        
+
         Establishes a connection to the Milvus database and loads settings from the
         configuration file.
         """
         # Load configuration for database
         config_path_name = join("..", "config", "db_config.json")
         self.client = MilvusClient(uri=join("db", "gars.db"))
-        
+
         # Establish default connection alias for Milvus operations
         connections.connect(alias="default", uri=join("db", "gars.db"))
 
@@ -64,7 +64,10 @@ class VectorDBManager:
         return res[0]
 
     def find_knn(
-        self, collection_name: str, query_vector: List[float], num_neighbors: int
+        self,
+        collection_name: str,
+        query_vector: List[float],
+        num_neighbors: int,
     ) -> List[Dict]:
         """
         Finds the k-nearest neighbors to a query vector in the specified collection.
@@ -80,8 +83,11 @@ class VectorDBManager:
         """
         # Initialize the collection and set search parameters
         collection = Collection(collection_name)
-        search_params = {"metric_type": self.params["metric_type"], "params": {}}
-        
+        search_params = {
+            "metric_type": self.params["metric_type"],
+            "params": {},
+        }
+
         # Perform KNN search using Milvus client
         res = self.client.search(
             collection_name=collection_name,

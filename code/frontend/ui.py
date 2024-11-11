@@ -31,7 +31,9 @@ def start_gars_session(
     global rec_system, output_images  # Declare as global to modify outer variables
     progress(0, desc="Starting")
     initial_preferences = {
-        "subjects": check_preferences(subjects_checkboxes, custom_preference_subject),
+        "subjects": check_preferences(
+            subjects_checkboxes, custom_preference_subject
+        ),
         "artists_movements": check_preferences(
             styles_checkboxes, custom_preference_style
         ),
@@ -51,7 +53,7 @@ def start_gars_session(
         total_iterations=iteration_count,
         initial_preferences=initial_preferences,
         diffusion_steps=diffusion_steps,
-        dummy=True
+        dummy=True,
     )
 
     gen_img = rec_system(0)
@@ -150,7 +152,11 @@ with gr.Blocks(theme=theme) as demo:
     with gr.Row():
         with gr.Tab("Initial Setup", visible=True) as initial_setup:
             iteration_count = gr.Slider(
-                label="Iteration Count", value=15, minimum=10, maximum=100, step=1
+                label="Iteration Count",
+                value=15,
+                minimum=10,
+                maximum=100,
+                step=1,
             )
             with gr.Accordion("Advanced Preferences (optional)", open=False):
                 gr.Markdown("Selection Preferences")
@@ -255,7 +261,13 @@ with gr.Blocks(theme=theme) as demo:
             )
             with gr.Row(visible=True) as rating_row:
                 rating = gr.Slider(
-                    -1, 1, value=0, label="Rating", minimum=-1, maximum=1, scale=3
+                    -1,
+                    1,
+                    value=0,
+                    label="Rating",
+                    minimum=-1,
+                    maximum=1,
+                    scale=3,
                 )
                 generate_btn = gr.Button("Generate", scale=1)
             with gr.Row(visible=False) as gallery_row:
@@ -267,7 +279,8 @@ with gr.Blocks(theme=theme) as demo:
             with gr.Tab("Advanced Options"):
                 gr.Markdown(" Lock Elements")
                 locked_elements = gr.CheckboxGroup(
-                    ["Subject", "Medium", "Style", "Modifiers"], show_label=False
+                    ["Subject", "Medium", "Style", "Modifiers"],
+                    show_label=False,
                 )
                 gr.Markdown(" Adjust Element Weights")
                 with gr.Group():

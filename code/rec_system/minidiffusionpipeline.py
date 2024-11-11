@@ -1,6 +1,7 @@
 import torch
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
 
+
 class MiniDiffusionPipeline:
     """
     A simplified wrapper for the Stable Diffusion XL pipeline for generating images from text prompts.
@@ -28,7 +29,9 @@ class MiniDiffusionPipeline:
             self.inference_steps = model_steps
             self.pipe = StableDiffusionXLPipeline.from_single_file(
                 f"https://huggingface.co/ByteDance/SDXL-Lightning/blob/main/sdxl_lightning_{self.inference_steps}step.safetensors",
-                torch_dtype=torch.float16, use_safetensors=True, variant="fp16"
+                torch_dtype=torch.float16,
+                use_safetensors=True,
+                variant="fp16",
             )
 
             # Enable CPU offload to optimize memory usage during inference
@@ -38,7 +41,7 @@ class MiniDiffusionPipeline:
             self.pipe.scheduler = EulerDiscreteScheduler.from_config(
                 self.pipe.scheduler.config, timestep_spacing="trailing"
             )
-            
+
             # Set real text-to-image function
             self.text2img = self.txt2imgreal
         else:
@@ -55,7 +58,9 @@ class MiniDiffusionPipeline:
         Returns:
             PIL.Image.Image: The generated image.
         """
-        return self.pipe(prompt, num_inference_steps=self.inference_steps, guidance_scale=0).images[0]
+        return self.pipe(
+            prompt, num_inference_steps=self.inference_steps, guidance_scale=0
+        ).images[0]
 
     def txt2imgmock(self, prompt: str):
         """

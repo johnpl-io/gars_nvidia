@@ -12,7 +12,7 @@ class ArtRecSystem(GenRecSystem):
     """
     A recommendation system for generating art prompts based on user preferences.
     Extends GenRecSystem to provide session based recommendations
-    using a text2image diffusion model and vector database storing the 
+    using a text2image diffusion model and vector database storing the
     embeddings of various prompt components.
     """
 
@@ -26,7 +26,7 @@ class ArtRecSystem(GenRecSystem):
         user_sample_stage_size: int = 3,
         max_jump: float = 1e-3,
         diffusion_steps: int = 2,
-        dummy=False
+        dummy=False,
     ):
         """
         Initialize the Art Recommendation System with user preferences, system parameters,
@@ -55,11 +55,15 @@ class ArtRecSystem(GenRecSystem):
             max_jump=max_jump,
             user_sample_stage_size=user_sample_stage_size,
             diffusion_steps=diffusion_steps,
-            dummy=dummy
+            dummy=dummy,
         )
 
-        self.is_done = False  # Flag to determine if recommendation session is complete
-        self.VDBManager = VectorDBManager()  # Vector database manager for performing similarity search for prompt elements
+        self.is_done = (
+            False  # Flag to determine if recommendation session is complete
+        )
+        self.VDBManager = (
+            VectorDBManager()
+        )  # Vector database manager for performing similarity search for prompt elements
 
     def adjust_user_preference(self, rating: float):
         """
@@ -72,7 +76,9 @@ class ArtRecSystem(GenRecSystem):
             self._weights
         ).reshape(-1, 1)
         # Adjust user embedding with rating, scaled by max_jump
-        self._cur_user_embedding += weighted_image_embedding * rating * self._max_jump
+        self._cur_user_embedding += (
+            weighted_image_embedding * rating * self._max_jump
+        )
         # Apply decay to the user embedding
         self._cur_user_embedding *= self._decay_rate
 
@@ -82,9 +88,11 @@ class ArtRecSystem(GenRecSystem):
         using a K-nearest neighbors approach.
         """
         embedding_size = self._cur_recommendation.shape[1]
-        # reshape user vector into a matrix with each row representing their preference for 
+        # reshape user vector into a matrix with each row representing their preference for
         # a corresponding prompt component (subject, style, etc.)
-        user_preferences = np.reshape(self._cur_user_embedding, (-1, embedding_size))
+        user_preferences = np.reshape(
+            self._cur_user_embedding, (-1, embedding_size)
+        )
 
         # For every prompt component
         for index, element in enumerate(self._prompt_elements):
@@ -115,13 +123,20 @@ class ArtRecSystem(GenRecSystem):
             chosen_prompt_element = self.VDBManager.find_by_id(
                 element, chosen_prompt_id
             )
-            self._cur_recommendation[vec_index] = chosen_prompt_element["vector"]
+            self._cur_recommendation[vec_index] = chosen_prompt_element[
+                "vector"
+            ]
             self._cur_prompt[index] = chosen_prompt_element["plain_text"]
 
         # Finally we increment our iteration count
         self._iteration += 1
 
-    def __call__(self, rating: float = 0.0, freeze_elements: List[str] = [], preference_weights: List[float] = []) -> str:
+    def __call__(
+        self,
+        rating: float = 0.0,
+        freeze_elements: List[str] = [],
+        preference_weights: List[float] = [],
+    ) -> str:
         """
         Main function to process user input, adjust preferences, and generate the next image prompt.
 
@@ -141,7 +156,9 @@ class ArtRecSystem(GenRecSystem):
             self._weights = preference_weights
 
         print("\n=== ArtRecSystem Call ===")
-        print(f"Starting recommendation iteration {self._iteration + 1}/{self._total_iterations}")
+        print(
+            f"Starting recommendation iteration {self._iteration + 1}/{self._total_iterations}"
+        )
         print(f"User Rating Received: {rating}")
         print(f"Freeze Elements: {freeze_elements}")
         print(f"Updated Weights: {self._weights}")
@@ -152,12 +169,16 @@ class ArtRecSystem(GenRecSystem):
         # Update user preferences based on rating
         self.adjust_user_preference(rating)
         adjust_time = time.time() - start_time
-        print(f"[{adjust_time:.2f}s] User preferences adjusted based on rating.")
+        print(
+            f"[{adjust_time:.2f}s] User preferences adjusted based on rating."
+        )
 
         # Generate the next prompt based on updated preferences
         self.recommend_prompt()
         recommend_time = time.time() - start_time
-        print(f"[{recommend_time:.2f}s] New prompt recommended based on user preferences.")
+        print(
+            f"[{recommend_time:.2f}s] New prompt recommended based on user preferences."
+        )
 
         # Generate the image using the diffusion model
         img = self._generate_image()
