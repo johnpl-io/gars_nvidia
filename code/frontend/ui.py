@@ -1,11 +1,11 @@
 import gradio as gr
 import os
 from PIL import Image, ImageDraw
-
+from pygments.styles.dracula import green
 
 from rec_system.minidiffusionpipeline import MiniDiffusionPipeline
 from rec_system.art_rec import ArtRecSystem
-
+from gradio.themes.utils import colors
 image_pipeline = None
 rec_system = None
 output_images = []
@@ -31,9 +31,7 @@ def start_gars_session(
     custom_preference_medium,
     progress=gr.Progress(track_tqdm=True),
 ):
-
     global rec_system, output_images  # Declare as global to modify outer variables
-    progress(0, desc="Starting")
     initial_preferences = {
         "subjects": check_preferences(subjects_checkboxes, custom_preference_subject),
         "artists_movements": check_preferences(
@@ -59,7 +57,6 @@ def start_gars_session(
 
     gen_img = rec_system(0)
     output_images.append(gen_img)
-
     return {
         initial_setup: gr.update(visible=False),
         GARS: gr.update(visible=True),
@@ -133,10 +130,24 @@ def update_iteration():
 def show_advanced(status):
     return {advanced_tab: gr.update(visible=status)}
 
+green_custom = gr.themes.utils.colors.Color(
+    name="green_custom",
+    c50="#e0ff00",
+    c100="#c8ff00",
+    c200="#b1ff00",
+    c300="#99f000",
+    c400="#81cb00",
+    c500="#76b900",
+    c600="#6aa600",
+    c700="#528100",
+    c800="#3b5c00",
+    c900="#233700",
+    c950="#0b1200",
+)
 
 theme = gr.themes.Base(
-    primary_hue="teal",
-    secondary_hue="teal",
+    primary_hue=green_custom,
+    secondary_hue=green_custom,
     neutral_hue="stone",
 )
 
@@ -151,121 +162,119 @@ def show_gallery():
 
 with gr.Blocks(theme=theme) as demo:
     with gr.Row():
-        with gr.Tab("Initial Setup", visible=True) as initial_setup:
-            iteration_count = gr.Slider(
-                label="Iteration Count", value=15, minimum=10, maximum=100, step=1
-            )
-            with gr.Accordion("Advanced Preferences (optional)", open=False):
-                gr.Markdown("Selection Preferences")
-                subjects_checkboxes = gr.CheckboxGroup(
-                    [
-                        "Animals",
-                        "Landscapes",
-                        "Space",
-                        "Oceans",
-                        "Forests",
-                        "Mountains",
-                        "Rivers",
-                        "Deserts",
-                        "Urban Life",
-                        "Fantasy Creatures",
-                        "Mythology",
-                        "Architecture",
-                        "Cityscapes",
-                        "Flowers",
-                        "Sunsets",
-                        "Underwater Scenes",
-                        "Winter Scenes",
-                        "Autumn Forests",
-                        "Portraits",
-                        "Historical Scenes",
-                        "Abstract Concepts",
-                        "Still Life",
-                        "Vehicles",
-                        "Technology",
-                        "Sports",
-                        "Music",
-                        "Food",
-                        "Fashion",
-                        "Travel",
-                    ],
-                    label="Subjects",
+        with gr.Column("initial setup wrapper") as initial_setup:
+            with gr.Tab("Initial Setup", visible=True):
+                iteration_count = gr.Slider(
+                    label="Iteration Count", value=15, minimum=10, maximum=100, step=1
                 )
-                custom_preference_subject = gr.Textbox(
-                    show_label=False, placeholder="Custom Subject"
-                )
+                with gr.Accordion("Advanced Preferences (optional)", open=False):
+                    gr.Markdown("Selection Preferences")
+                    subjects_checkboxes = gr.CheckboxGroup(
+                        [
+                            "Animals",
+                            "Landscapes",
+                            "Space",
+                            "Oceans",
+                            "Forests",
+                            "Mountains",
+                            "Rivers",
+                            "Deserts",
+                            "Urban Life",
+                            "Fantasy Creatures",
+                            "Mythology",
+                            "Architecture",
+                            "Cityscapes",
+                            "Flowers",
+                            "Sunsets",
+                            "Underwater Scenes",
+                            "Winter Scenes",
+                            "Autumn Forests",
+                            "Portraits",
+                            "Historical Scenes",
+                            "Abstract Concepts",
+                            "Still Life",
+                            "Vehicles",
+                            "Technology",
+                            "Sports",
+                            "Music",
+                            "Food",
+                            "Fashion",
+                            "Travel",
+                        ],
+                        label="Subjects",
+                    )
+                    custom_preference_subject = gr.Textbox(
+                        show_label=False, placeholder="Custom Subject"
+                    )
 
-                art_mediums_checkboxes = gr.CheckboxGroup(
-                    [
-                        "Digital Art",
-                        "Painting",
-                        "Sculpture",
-                        "Photography",
-                        "Ceramics",
-                        "Woodworking",
-                        "Textiles",
-                        "Glass Art",
-                        "Metalwork",
-                        "Printmaking",
-                    ],
-                    label="Mediums",
-                )
-                custom_preference_medium = gr.Textbox(
-                    show_label=False, placeholder="Custom Medium"
-                )
-                styles_checkboxes = gr.CheckboxGroup(
-                    [
-                        "Impressionism",
-                        "Renaissance",
-                        "Baroque",
-                        "Modern Art",
-                        "Pop Art",
-                        "Abstract Art",
-                        "Surrealism",
-                        "Cubism",
-                        "Expressionism",
-                        "Minimalism",
-                    ],
-                    label="Styles",
-                )
-                custom_preference_style = gr.Textbox(
-                    show_label=False, placeholder="Custom Style"
-                )
+                    art_mediums_checkboxes = gr.CheckboxGroup(
+                        [
+                            "Digital Art",
+                            "Painting",
+                            "Sculpture",
+                            "Photography",
+                            "Ceramics",
+                            "Woodworking",
+                            "Textiles",
+                            "Glass Art",
+                            "Metalwork",
+                            "Printmaking",
+                        ],
+                        label="Mediums",
+                    )
+                    custom_preference_medium = gr.Textbox(
+                        show_label=False, placeholder="Custom Medium"
+                    )
+                    styles_checkboxes = gr.CheckboxGroup(
+                        [
+                            "Impressionism",
+                            "Renaissance",
+                            "Baroque",
+                            "Modern Art",
+                            "Pop Art",
+                            "Abstract Art",
+                            "Surrealism",
+                            "Cubism",
+                            "Expressionism",
+                            "Minimalism",
+                        ],
+                        label="Styles",
+                    )
+                    custom_preference_style = gr.Textbox(
+                        show_label=False, placeholder="Custom Style"
+                    )
 
-                sdxl_dropdown = gr.Dropdown(
-                    [
-                        "SDXL Lightning [2 Step]",
-                        "SDXL Lightning [4 Step]",
-                        "SDXL Lightning [8 Step]",
-                    ],
-                    label="Model",
-                    value="SDXL Lightning [8 Step]",
-                    interactive=True,
-                )
+                    sdxl_dropdown = gr.Dropdown(
+                        [
+                            "SDXL Lightning [2 Step]",
+                            "SDXL Lightning [4 Step]",
+                            "SDXL Lightning [8 Step]",
+                        ],
+                        label="Model",
+                        value="SDXL Lightning [8 Step]",
+                        interactive=True,
+                    )
 
-            submit_btn = gr.Button("Submit")
-
-        with gr.Tab("GARS", visible=False) as GARS:
-            iteration_display = gr.Markdown("## Iteration: ", visible=True)
-            output_image = gr.Image(label="Output Image", visible=True)
-            output_gallery = gr.Gallery(
-                label="Generated images",
-                show_label=False,
-                elem_id="gallery",
-                object_fit="contain",
-                height="auto",
-                visible=False,
-            )
-            with gr.Row(visible=True) as rating_row:
-                rating = gr.Slider(
-                    -1, 1, value=0, label="Rating", minimum=-1, maximum=1, scale=3
+                submit_btn = gr.Button("Submit")
+        with gr.Column("GARS", visible=False) as GARS:
+            with gr.Tab("GARS"):
+                iteration_display = gr.Markdown("## Iteration: ", visible=True)
+                output_image = gr.Image(label="Output Image", visible=True)
+                output_gallery = gr.Gallery(
+                    label="Generated images",
+                    show_label=False,
+                    elem_id="gallery",
+                    object_fit="contain",
+                    height="auto",
+                    visible=False,
                 )
-                generate_btn = gr.Button("Generate", scale=1)
-            with gr.Row(visible=False) as gallery_row:
-                gallery_submit = gr.Button("Show Gallery")
-        with gr.Tab("Settings", visible=False) as settings:
-            with gr.Row():
-                text_input3 = gr.Textbox(label="Settings Configuration")
+                with gr.Row(visible=True) as rating_row:
+                    rating = gr.Slider(
+                        -1, 1, value=0, label="Rating", minimum=-1, maximum=1, scale=3
+                    )
+                    generate_btn = gr.Button("Generate", scale=1)
+                with gr.Row(visible=False) as gallery_row:
+                    gallery_submit = gr.Button("Show Gallery")
         with gr.Column("Settings", visible=False) as advanced_tab:
             with gr.Tab("Advanced Options"):
                 gr.Markdown(" Lock Elements")

@@ -1,5 +1,5 @@
 jupyterlab>3.0
-gradio==4.44.0
+gradio==5.5.0
 diffusers==0.30.3
 torch==2.4.1
 tqdm==4.66.2
