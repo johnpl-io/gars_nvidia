@@ -1,5 +1,3 @@
-import os
-
 from pymilvus import MilvusClient, Collection, connections
 from os.path import join
 import json
@@ -19,9 +17,9 @@ class VectorDBManager:
         """
         Initializes the VectorDBManager by loading database configuration parameters.
         """
-        config_path_name = os.path.join("..", "config", "db_config.json")
-        self.client = MilvusClient(uri="db/gars.db")
-        connections.connect(alias="default", uri='db/gars.db')
+        config_path_name = join("..", "config", "db_config.json")
+        self.client = MilvusClient(uri=join("db", "gars.db"))
+        connections.connect(alias="default", uri=join("db", "gars.db"))
 
         with open(config_path_name, "r") as f:
             self.params = json.load(f)

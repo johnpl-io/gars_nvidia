@@ -18,7 +18,8 @@ class ArtRecSystem(GenRecSystem):
         total_iterations: int = 10,
         user_sample_stage_size: int = 3,
         max_jump: float = 1e-3,
-        diffusion_steps: int = 2
+        diffusion_steps: int = 2,
+        dummy=False
     ):
         """
         Initialize the Art Recommendation System.
@@ -40,7 +41,8 @@ class ArtRecSystem(GenRecSystem):
             total_iterations=total_iterations,
             max_jump=max_jump,
             user_sample_stage_size=user_sample_stage_size,
-            diffusion_steps=diffusion_steps
+            diffusion_steps=diffusion_steps,
+            dummy=dummy
         )
 
         # determines whether the recommendation process is over
@@ -105,7 +107,7 @@ class ArtRecSystem(GenRecSystem):
         Returns:
             str: A URL to the next image that was generated for the user.
         """
-
+        
         # Trying to make the api as stateless as possible following RESTful principles
         old_frozen_elements = self._frozen_elements.copy()
         if freeze_elements:

@@ -1,8 +1,6 @@
 import math
 from abc import ABC, abstractmethod
 from typing import List
-
-import logging
 import numpy as np
 from openai import OpenAI
 
@@ -22,7 +20,8 @@ class GenRecSystem(ABC):
         total_iterations: int,
         max_jump: float,
         user_sample_stage_size: int,
-        diffusion_steps: int
+        diffusion_steps: int,
+        dummy: bool
     ) -> None:
 
         self._iteration = 0
@@ -30,6 +29,7 @@ class GenRecSystem(ABC):
         self._max_jump = max_jump
         self._total_iterations = total_iterations
         self._user_sample_stage_size = user_sample_stage_size
+        self.dummy = dummy
         # Load parameters from the configuration file
         self._prompt_elements = self._params["prompt_elements"]
         num_elements = len(set(self._prompt_elements))
@@ -45,8 +45,8 @@ class GenRecSystem(ABC):
         self._frozen_elements = frozen_elements
         if self._frozen_elements:
             self._update_frozen_elements()
-
-        self.diffusion_pipeline = MiniDiffusionPipeline(diffusion_steps)
+        
+        self.diffusion_pipeline = MiniDiffusionPipeline(diffusion_steps, mock=dummy)
 
     def _update_frozen_elements(self):
         for key, value in self._frozen_elements.items():
@@ -96,7 +96,7 @@ class GenRecSystem(ABC):
             str: URL of the generated image.
         """
         prompt = self.get_prompt()
-        image_content = self.diffusion_pipeline.txt2img(prompt)
+        image_content = self.diffusion_pipeline.text2img(prompt)
         return image_content
 
     def _get_num_neighbors(self, total: int) -> int:

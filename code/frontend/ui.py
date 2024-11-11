@@ -1,9 +1,5 @@
 import gradio as gr
 import os
-from PIL import Image, ImageDraw
-
-
-from rec_system.minidiffusionpipeline import MiniDiffusionPipeline
 from rec_system.art_rec import ArtRecSystem
 
 image_pipeline = None
@@ -55,6 +51,7 @@ def start_gars_session(
         total_iterations=iteration_count,
         initial_preferences=initial_preferences,
         diffusion_steps=diffusion_steps,
+        dummy=True
     )
 
     gen_img = rec_system(0)
