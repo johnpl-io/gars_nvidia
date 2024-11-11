@@ -50,12 +50,12 @@ def start_gars_session(
         diffusion_steps = 2
     if sdxl_dropdown == "SDXL Lightning [4 Step]":
         diffusion_steps = 4
-
+    progress(0, desc="Starting")
     rec_system = ArtRecSystem(
         total_iterations=iteration_count,
         initial_preferences=initial_preferences,
         diffusion_steps=diffusion_steps,
-        dummy=True,
+        dummy=False,
     )
 
     gen_img = rec_system(0)
@@ -258,8 +258,8 @@ with gr.Blocks(theme=theme) as demo:
                         value="SDXL Lightning [8 Step]",
                         interactive=True,
                     )
-
                 submit_btn = gr.Button("Submit")
+
         with gr.Column("GARS", visible=False) as GARS:
             with gr.Tab("GARS"):
                 iteration_display = gr.Markdown("## Iteration: ", visible=True)

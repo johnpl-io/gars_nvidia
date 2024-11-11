@@ -3,3 +3,6 @@
 # after all system packages and programming language specific package have been installed.
 #
 # Note: This file may be removed if you don't need to use it
+
+sudo mkdir -p /mnt/cache/
+sudo chown workbench:workbench /mnt/cache/

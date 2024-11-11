@@ -114,3 +114,7 @@ execution:
     target: /project/
     description: Project directory
     options: rw
+  - type: volume
+    target: /mnt/cache/
+    description: Hugging Face Cache
+    options: ""

@@ -7,3 +7,4 @@ transformers==4.43.4
 accelerate==0.34.2
 openai==1.35.10
 pymilvus==2.4.4
+ipywidgets==8.1.5
