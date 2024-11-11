@@ -1,5 +1,3 @@
-import os
-
 from pymilvus import MilvusClient, Collection, connections
 from os.path import join
 import json
@@ -11,6 +9,10 @@ class VectorDBManager:
     """
     A manager class for handling vector operations in a Milvus database.
 
+    This class provides methods for retrieving, searching, and managing vectors
+    in various collections within a Milvus database, such as finding vectors by
+    ID, searching for nearest neighbors, and listing collections.
+
     Attributes:
         params (dict): Configuration parameters for Milvus operations.
     """
@@ -18,11 +20,18 @@ class VectorDBManager:
     def __init__(self):
         """
         Initializes the VectorDBManager by loading database configuration parameters.
-        """
-        config_path_name = os.path.join("..", "config", "db_config.json")
-        self.client = MilvusClient(uri="db/gars.db")
-        connections.connect(alias="default", uri='db/gars.db')
 
+        Establishes a connection to the Milvus database and loads settings from the
+        configuration file.
+        """
+        # Load configuration for database
+        config_path_name = join("..", "config", "db_config.json")
+        self.client = MilvusClient(uri=join("db", "gars.db"))
+
+        # Establish default connection alias for Milvus operations
+        connections.connect(alias="default", uri=join("db", "gars.db"))
+
+        # Load Milvus-specific parameters from the configuration file
         with open(config_path_name, "r") as f:
             self.params = json.load(f)
 
@@ -31,42 +40,55 @@ class VectorDBManager:
         Retrieves a vector by its unique identifier from the specified collection.
 
         Args:
-            collection_name (str): The name of the collection.
-            id (int): The unique identifier of the vector.
+            collection_name (str): The name of the collection to search in.
+            id (int): The unique identifier of the vector to retrieve.
 
         Returns:
-            Union[Dict, None]: The retrieved vector data or None if not found.
-        """
+            Union[Dict, None]: The retrieved vector data as a dictionary with vector
+            data converted to a NumPy array, or None if not found.
 
+        Raises:
+            ValueError: If the specified vector is not found in the collection.
+        """
+        # Query the collection by ID
         res = self.client.get(collection_name=collection_name, ids=[id])
 
+        # Handle case where vector is not found
         if res is None:
             raise ValueError(
-                f"{collection_name} with {collection_name}_id was not found!"
+                f"Vector with ID {id} in collection '{collection_name}' was not found!"
             )
 
+        # Convert vector data to NumPy array for compatibility
         res[0]["vector"] = np.asarray(res[0]["vector"])
-
         return res[0]
 
     def find_knn(
-        self, collection_name: str, query_vector: List[float], num_neighbors: int
+        self,
+        collection_name: str,
+        query_vector: List[float],
+        num_neighbors: int,
     ) -> List[Dict]:
         """
         Finds the k-nearest neighbors to a query vector in the specified collection.
 
         Args:
-            collection_name (str): The name of the collection.
-            query_vector (List[float]): The query vector data.
+            collection_name (str): The name of the collection to search.
+            query_vector (List[float]): The query vector to search for similar items.
             num_neighbors (int): The number of nearest neighbors to retrieve.
 
         Returns:
-            List[Dict]: The search results containing the nearest neighbors.
+            List[Dict]: The search results containing the nearest neighbors as a list
+            of dictionaries with vector data and metadata.
         """
-
+        # Initialize the collection and set search parameters
         collection = Collection(collection_name)
+        search_params = {
+            "metric_type": self.params["metric_type"],
+            "params": {},
+        }
 
-        search_params = {"metric_type": self.params["metric_type"], "params": {}}
+        # Perform KNN search using Milvus client
         res = self.client.search(
             collection_name=collection_name,
             data=[query_vector],
@@ -75,29 +97,28 @@ class VectorDBManager:
             search_param=search_params,
         )
 
-        return res[0]
+        return res[0]  # Return nearest neighbors list
 
     def list_collections(self) -> List[str]:
         """
-        Lists all collections in the database.
+        Lists all collections in the Milvus database.
 
         Returns:
-            List[str]: A list of collection names.
+            List[str]: A list of all collection names in the database.
         """
-
         return self.client.list_collections()
 
     def get_collection_size(self, collection_name: str) -> int:
         """
-        Gets number of entries in a specified collection
+        Retrieves the number of entries in a specified collection.
 
         Args:
-            collection_name (str): The name of the collection.
+            collection_name (str): The name of the collection to get the size for.
 
         Returns:
-            Int: The number of entries for the given collection
+            int: The number of entries in the specified collection.
         """
-
+        # Get collection statistics and retrieve row count
         collection_stats = self.client.get_collection_stats(
             collection_name=collection_name
         )

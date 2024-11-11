@@ -33,7 +33,9 @@ def start_gars_session(
 ):
     global rec_system, output_images  # Declare as global to modify outer variables
     initial_preferences = {
-        "subjects": check_preferences(subjects_checkboxes, custom_preference_subject),
+        "subjects": check_preferences(
+            subjects_checkboxes, custom_preference_subject
+        ),
         "artists_movements": check_preferences(
             styles_checkboxes, custom_preference_style
         ),
@@ -53,10 +55,12 @@ def start_gars_session(
         total_iterations=iteration_count,
         initial_preferences=initial_preferences,
         diffusion_steps=diffusion_steps,
+        dummy=True,
     )
 
     gen_img = rec_system(0)
     output_images.append(gen_img)
+
     return {
         initial_setup: gr.update(visible=False),
         GARS: gr.update(visible=True),
@@ -279,7 +283,8 @@ with gr.Blocks(theme=theme) as demo:
             with gr.Tab("Advanced Options"):
                 gr.Markdown(" Lock Elements")
                 locked_elements = gr.CheckboxGroup(
-                    ["Subject", "Medium", "Style", "Modifiers"], show_label=False
+                    ["Subject", "Medium", "Style", "Modifiers"],
+                    show_label=False,
                 )
                 gr.Markdown(" Adjust Element Weights")
                 with gr.Group():
