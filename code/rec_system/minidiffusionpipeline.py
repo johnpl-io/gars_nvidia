@@ -1,6 +1,6 @@
 import torch
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
-
+from PIL import Image
 
 class MiniDiffusionPipeline:
     """
@@ -16,7 +16,7 @@ class MiniDiffusionPipeline:
         text2img (function): The method for text-to-image generation, either real or mock.
     """
 
-    def __init__(self, model_steps: int, mock=False):
+    def __init__(self, model_steps: int, mock: bool=False):
         """
         Initializes the MiniDiffusionPipeline with specified model steps and mode (real or mock).
 
@@ -48,7 +48,7 @@ class MiniDiffusionPipeline:
             # Use mock function for text-to-image when mock mode is enabled
             self.text2img = self.txt2imgmock
 
-    def txt2imgreal(self, prompt: str):
+    def txt2imgreal(self, prompt: str) -> Image.Image:
         """
         Generates an image from the provided text prompt using the real Stable Diffusion pipeline.
 
@@ -62,7 +62,7 @@ class MiniDiffusionPipeline:
             prompt, num_inference_steps=self.inference_steps, guidance_scale=0
         ).images[0]
 
-    def txt2imgmock(self, prompt: str):
+    def txt2imgmock(self, prompt: str) -> str:
         """
         Returns a placeholder image URL for mock functionality.
 

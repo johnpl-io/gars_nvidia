@@ -4,9 +4,11 @@ import numpy as np
 import json
 import os
 from pymilvus import Collection, connections
+from openai import OpenAI
+from typing import List
 
 
-def generate_embedding_api(client, text, model):
+def generate_embedding_api(client: OpenAI, text: str, model: str) -> List[float]:
     """
     Generate an embedding vector for the given text using a specified model from OpenAI.
 
@@ -22,7 +24,7 @@ def generate_embedding_api(client, text, model):
     return response.data[0].embedding
 
 
-def load_embedding(index, embedding_path):
+def load_embedding(index : int, embedding_path: str) -> np.ndarray:
     """
     Load an embedding from a memory-mapped file.
 
@@ -38,7 +40,7 @@ def load_embedding(index, embedding_path):
     return row
 
 
-def export_collection(db_client, collection_name, file_name, params):
+def export_collection(db_client: MilvusClient, collection_name: str, file_name: str, params: dict) -> np.ndarray:
     """
     Exports data from a text file into a Milvus collection, associating each text entry
     with a pre-generated embedding.
