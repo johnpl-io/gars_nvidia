@@ -61,11 +61,11 @@ class ArtRecSystem(GenRecSystem):
         self.is_done = (
             False  # Flag to determine if recommendation session is complete
         )
-        self.VDBManager = (
+        self._VDBManager = (
             VectorDBManager()
         )  # Vector database manager for performing similarity search for prompt elements
 
-    def adjust_user_preference(self, rating: float):
+    def _adjust_user_preference(self, rating: float):
         """
         Adjusts the user's embedding vector based on the user's rating of the current image.
 
@@ -82,7 +82,7 @@ class ArtRecSystem(GenRecSystem):
         # Apply decay to the user embedding
         self._cur_user_embedding *= self._decay_rate
 
-    def recommend_prompt(self):
+    def _recommend_prompt(self):
         """
         Generates the next recommended prompt based on current user embedding and user preferences
         using a K-nearest neighbors approach.
@@ -102,7 +102,7 @@ class ArtRecSystem(GenRecSystem):
             if element in self._frozen_elements:
                 continue  # Skip frozen elements
 
-            collection_size = self.VDBManager.get_collection_size(element)
+            collection_size = self._VDBManager.get_collection_size(element)
             # obtain the number of neighbors to sample from
             num_neighbors = self._get_num_neighbors(collection_size)
 
@@ -113,14 +113,14 @@ class ArtRecSystem(GenRecSystem):
             else:
                 # Use user prompt component vector to query the vector database
                 # for k most preferred prompt component elements
-                k_neighbors = self.VDBManager.find_knn(
+                k_neighbors = self._VDBManager.find_knn(
                     element, user_preferences[vec_index], num_neighbors
                 )
                 # then randomly choose from the nearest neighbors
                 chosen_prompt_id = np.random.choice(k_neighbors)["id"]
 
             # Update current recommendation with the selected prompt element
-            chosen_prompt_element = self.VDBManager.find_by_id(
+            chosen_prompt_element = self._VDBManager.find_by_id(
                 element, chosen_prompt_id
             )
             self._cur_recommendation[vec_index] = chosen_prompt_element[
@@ -131,9 +131,7 @@ class ArtRecSystem(GenRecSystem):
         # Finally we increment our iteration count
         self._iteration += 1
 
-    from typing import List
-
-    def validate_inputs(
+    def _validate_inputs(
         self,
         rating: float,
         freeze_elements: List[str],
@@ -161,7 +159,7 @@ class ArtRecSystem(GenRecSystem):
                         outside the 0.0 to 1.0 range.
         """
         # Validate rating
-        if not isinstance(rating, float):
+        if not (isinstance(rating, float) or isinstance(rating, int)):
             raise ValueError("Rating must be a float.")
         if not -1.0 <= rating <= 1.0:
             raise ValueError("Rating must be between -1.0 and 1.0.")
@@ -180,7 +178,7 @@ class ArtRecSystem(GenRecSystem):
         # Validate preference_weights
         if not isinstance(preference_weights, list):
             raise ValueError("Preference weights must be a list.")
-        if not all(isinstance(weight, float) for weight in preference_weights):
+        if not all(isinstance(weight, float) or isinstance(weight, int) for weight in preference_weights):
             raise ValueError("Each weight in preference_weights must be a float.")
         if not all(0.0 <= weight <= 1.0 for weight in preference_weights):
             raise ValueError("Each weight in preference_weights must be between 0.0 and 1.0.")
@@ -207,7 +205,7 @@ class ArtRecSystem(GenRecSystem):
                         constraints as specified in validate_inputs.
         """
 
-        self.validate_inputs(rating,
+        self._validate_inputs(rating,
                              freeze_elements,
                              preference_weights)
         
@@ -230,14 +228,14 @@ class ArtRecSystem(GenRecSystem):
         start_time = time.time()
 
         # Update user preferences based on rating
-        self.adjust_user_preference(rating)
+        self._adjust_user_preference(rating)
         adjust_time = time.time() - start_time
         print(
             f"[{adjust_time:.2f}s] User preferences adjusted based on rating."
         )
 
         # Generate the next prompt based on updated preferences
-        self.recommend_prompt()
+        self._recommend_prompt()
         recommend_time = time.time() - start_time
         print(
             f"[{recommend_time:.2f}s] New prompt recommended based on user preferences."

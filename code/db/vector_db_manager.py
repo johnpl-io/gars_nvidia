@@ -26,14 +26,14 @@ class VectorDBManager:
         """
         # Load configuration for database
         config_path_name = join("..", "config", "db_config.json")
-        self.client = MilvusClient(uri=join("db", "gars.db"))
+        self._client = MilvusClient(uri=join("db", "gars.db"))
 
         # Establish default connection alias for Milvus operations
         connections.connect(alias="default", uri=join("db", "gars.db"))
 
         # Load Milvus-specific parameters from the configuration file
         with open(config_path_name, "r") as f:
-            self.params = json.load(f)
+            self._params = json.load(f)
 
     def find_by_id(self, collection_name: str, id: int) -> Union[Dict, None]:
         """
@@ -51,7 +51,7 @@ class VectorDBManager:
             ValueError: If the specified vector is not found in the collection.
         """
         # Query the collection by ID
-        res = self.client.get(collection_name=collection_name, ids=[id])
+        res = self._client.get(collection_name=collection_name, ids=[id])
 
         # Handle case where vector is not found
         if res is None:
@@ -84,12 +84,12 @@ class VectorDBManager:
         # Initialize the collection and set search parameters
         collection = Collection(collection_name)
         search_params = {
-            "metric_type": self.params["metric_type"],
+            "metric_type": self._params["metric_type"],
             "params": {},
         }
 
         # Perform KNN search using Milvus client
-        res = self.client.search(
+        res = self._client.search(
             collection_name=collection_name,
             data=[query_vector],
             anns_field="vector",
@@ -106,7 +106,7 @@ class VectorDBManager:
         Returns:
             List[str]: A list of all collection names in the database.
         """
-        return self.client.list_collections()
+        return self._client.list_collections()
 
     def get_collection_size(self, collection_name: str) -> int:
         """
@@ -119,7 +119,7 @@ class VectorDBManager:
             int: The number of entries in the specified collection.
         """
         # Get collection statistics and retrieve row count
-        collection_stats = self.client.get_collection_stats(
+        collection_stats = self._client.get_collection_stats(
             collection_name=collection_name
         )
 

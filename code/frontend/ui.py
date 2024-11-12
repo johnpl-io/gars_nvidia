@@ -27,7 +27,6 @@ def gars_session_validation(iteration_count):
         gr.Warning(error_message)
         return False
     return True
-    #return None, True
 
 
 def start_gars_session(
@@ -79,7 +78,7 @@ def start_gars_session(
         dummy=dummy
     )
 
-    gen_img = rec_system(0)
+    gen_img = rec_system(0.0)
     output_images.append(gen_img)
 
     return {
