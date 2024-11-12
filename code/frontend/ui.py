@@ -1,19 +1,11 @@
-import threading
-import time
-from pydoc import visiblename
-
 import gradio as gr
 import os
-from PIL import Image, ImageDraw
-from pygments.styles.dracula import green
-
-from rec_system.minidiffusionpipeline import MiniDiffusionPipeline
 from rec_system.art_rec import ArtRecSystem
-from gradio.themes.utils import colors
+
 image_pipeline = None
 rec_system = None
 output_images = []
-
+dummy=True
 
 def check_preferences(element_checkboxes, element_preferences):
     return_list = []
@@ -59,7 +51,7 @@ def start_gars_session(
         total_iterations=iteration_count,
         initial_preferences=initial_preferences,
         diffusion_steps=diffusion_steps,
-        dummy=False,
+        dummy=dummy,
     )
 
     gen_img = rec_system(0)
@@ -131,11 +123,14 @@ def generate_rec(
     return None
 
 def show_latent():
-    while True:
-        item = rec_system.diffusion_pipeline.queue.get()
-        if item is None:
-            break
-        yield item
+    if dummy:
+        yield "https://fal-cdn.batuhan-941.workers.dev/files/koala/-CQBCeIxrvPqrvt4FDY5n.jpeg"
+    else:
+        while True:
+            item = rec_system.diffusion_pipeline.queue.get()
+            if item is None:
+                break
+            yield item
 
 def update_iteration():
     return f"## Iteration: {rec_system._iteration} / {rec_system._total_iterations}"
@@ -284,7 +279,7 @@ with gr.Blocks(theme=theme) as demo:
         with gr.Column("GARS", visible=False) as GARS:
             with gr.Tab("GARS"):
                 iteration_display = gr.Markdown("## Iteration: ", visible=True)
-                output_image = gr.Image(streaming=True, label="Output Image", visible=True)
+                output_image = gr.Image(streaming=not dummy, label="Output Image", visible=True)
                 output_gallery = gr.Gallery(
                     label="Generated images",
                     show_label=False,
