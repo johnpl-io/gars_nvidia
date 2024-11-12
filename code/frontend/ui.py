@@ -1,3 +1,6 @@
+import time
+from pydoc import visiblename
+
 import gradio as gr
 import os
 from PIL import Image, ImageDraw
@@ -66,6 +69,8 @@ def start_gars_session(
         GARS: gr.update(visible=True),
         advanced_checkbox: gr.update(visible=True),
         output_image: gen_img,
+        output: "dummy",
+        progress_bar: gr.update(visible=False)
     }
 
 
@@ -76,11 +81,9 @@ def generate_rec(
     style_weight,
     modifiers_weight,
     locked_elements,
-    progress=gr.Progress(track_tqdm=True),
 ):
     global output_images
     gen_img = None
-    progress(0, desc="Starting")
     if locked_elements:
         lock_element_list = []
         if "Modifiers" in locked_elements:
@@ -126,7 +129,17 @@ def generate_rec(
         }
     return None
 
-
+def show_latent():
+    print("hi")
+    print(rec_system.diffusion_pipeline.current_step)
+    while(rec_system.diffusion_pipeline.current_step) == 0  or rec_system.diffusion_pipeline.current_step == rec_system.diffusion_pipeline.inference_steps - 1:
+        time.sleep(0.1)
+    while rec_system.diffusion_pipeline.current_step < rec_system.diffusion_pipeline.inference_steps - 1:
+        print("less than 8")
+        print(rec_system.diffusion_pipeline.current_step)
+        time.sleep(0.1)
+        yield {output_image: rec_system.diffusion_pipeline.latent_img[-1]}
+    yield {output_image: rec_system.diffusion_pipeline.latent_img[-1]}
 def update_iteration():
     return f"## Iteration: {rec_system._iteration} / {rec_system._total_iterations}"
 
@@ -154,6 +167,12 @@ theme = gr.themes.Base(
     secondary_hue=green_custom,
     neutral_hue="stone",
 )
+
+def show_progress():
+    return {
+        progress_bar: gr.update(visible=True),
+        initial_setup: gr.update(visible=False),
+    }
 
 
 def show_gallery():
@@ -260,10 +279,15 @@ with gr.Blocks(theme=theme) as demo:
                     )
                 submit_btn = gr.Button("Submit")
 
+    # not descriptive enough
+        with gr.Column("Out", visible=False) as progress_bar:
+            with gr.Tab("out", visible=True):
+                output = gr.Textbox(label="Loading Model...", placeholder="Waiting on preference", visible=True)
+
         with gr.Column("GARS", visible=False) as GARS:
             with gr.Tab("GARS"):
                 iteration_display = gr.Markdown("## Iteration: ", visible=True)
-                output_image = gr.Image(label="Output Image", visible=True)
+                output_image = gr.Image(streaming=True, label="Output Image", visible=True)
                 output_gallery = gr.Gallery(
                     label="Generated images",
                     show_label=False,
@@ -332,6 +356,7 @@ with gr.Blocks(theme=theme) as demo:
         show_advanced, inputs=advanced_checkbox, outputs=advanced_tab
     )
 
+    submit_btn.click(fn=show_progress, outputs=[progress_bar, initial_setup])
     submit_btn.click(
         fn=start_gars_session,
         inputs=[
@@ -350,7 +375,13 @@ with gr.Blocks(theme=theme) as demo:
             advanced_checkbox,
             output_image,
             iteration_display,
+            output,
+            progress_bar,
         ],
+    )
+    generate_btn.click(
+        fn=show_latent,
+        outputs=[output_image]
     )
 
     generate_btn.click(
