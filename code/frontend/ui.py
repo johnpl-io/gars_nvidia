@@ -17,10 +17,7 @@ def check_preferences(element_checkboxes, element_preferences):
 
 
 
-def gars_session_validation(iteration_count, 
-                            custom_preference_subject,
-                            custom_preference_style,
-                            custom_preference_medium):
+def gars_session_validation(iteration_count):
     if not isinstance(iteration_count, int):
         error_message = "**Error**: Number of Iterations Must Be an Integer!"
         gr.Warning(error_message)
@@ -95,6 +92,27 @@ def start_gars_session(
     }
 
 
+def rec_validation(rating,
+                   subject_weight, 
+                   medium_weight,
+                   style_weight,
+                   modifiers_weight):
+    args = {
+        "Rating": [rating, 0,1],
+        "Subject Weight": [subject_weight, 0, 1],
+        "Medium Weight": [medium_weight, 0, 1],
+        "Style Weight": [style_weight, 0, 1],
+        "Modifers Weight": [modifiers_weight, 0, 1]
+    }
+    for arg_name in args:
+        arg = args[arg_name]
+        if not (isinstance(arg[0], float) or isinstance(arg[0], int)):
+            error_message = f"{arg[0]} must be a number from {arg[0]} to {arg[1]}"
+            gr.Warning(error_message)
+            return False
+    return True
+    
+
 def generate_rec(
     rating,
     subject_weight,
@@ -102,8 +120,18 @@ def generate_rec(
     style_weight,
     modifiers_weight,
     locked_elements,
+    rec_validation_state
 ):
     global output_images
+
+    if not rec_validation_state:
+        return {
+            output_image: None,
+            output_gallery: output_images,
+            rating_row: gr.update(visible=not rec_system.is_done),
+            gallery_row: gr.update(visible=rec_system.is_done),
+        }
+    
     gen_img = None
     if locked_elements:
         lock_element_list = []
@@ -150,7 +178,9 @@ def generate_rec(
         }
     return None
 
-def show_latent():
+def show_latent(rec_validation_state):
+    if not rec_validation_state:
+        yield None
     if dummy:
         yield "https://fal-cdn.batuhan-941.workers.dev/files/koala/-CQBCeIxrvPqrvt4FDY5n.jpeg"
     else:
@@ -205,6 +235,8 @@ def show_gallery():
         output_gallery: gr.update(visible=True),
         gallery_row: gr.update(visible=False),
         output_image: gr.update(visible=False),
+        advanced_checkbox: gr.update(visible=False),
+        advanced_tab: gr.update(visible=False)
     }
 
 
@@ -212,8 +244,7 @@ with gr.Blocks(theme=theme) as demo:
     with gr.Row():
         with gr.Column("initial setup wrapper") as initial_setup:
             with gr.Tab("Initial Setup", visible=True):
-                validation_state = gr.State()
-                #validation_message = gr.Markdown(label="Validation Message", visible=True)
+                init_validation_state = gr.State()
                 iteration_count = gr.Slider(
                     label="Iteration Count", value=15, minimum=10, maximum=100, step=1
                 )
@@ -337,6 +368,7 @@ with gr.Blocks(theme=theme) as demo:
                     ["Subject", "Medium", "Style", "Modifiers"],
                     show_label=False,
                 )
+                rec_validation_state = gr.State()
                 gr.Markdown(" Adjust Element Weights")
                 with gr.Group():
                     subject_weight = gr.Slider(
@@ -384,15 +416,10 @@ with gr.Blocks(theme=theme) as demo:
     )
 
     submit_btn.click(fn=gars_session_validation,
-                     inputs = [
-                         iteration_count,
-                         custom_preference_subject,
-                         custom_preference_style,
-                         custom_preference_medium],
-                         outputs = [validation_state]
-                         #outputs = [validation_message, validation_state]
+                     inputs = [iteration_count],
+                         outputs = [init_validation_state]
                      )
-    submit_btn.click(fn=show_progress, inputs=[validation_state], outputs=[progress_bar, initial_setup])
+    submit_btn.click(fn=show_progress, inputs=[init_validation_state], outputs=[progress_bar, initial_setup])
     submit_btn.click(
         fn=start_gars_session,
         inputs=[
@@ -404,7 +431,7 @@ with gr.Blocks(theme=theme) as demo:
             custom_preference_style,
             art_mediums_checkboxes,
             custom_preference_medium,
-            validation_state
+            init_validation_state
         ],
         outputs=[
             initial_setup,
@@ -416,8 +443,20 @@ with gr.Blocks(theme=theme) as demo:
             progress_bar,
         ],
     )
+
+    generate_btn.click(fn=rec_validation, 
+                       inputs =[
+                           rating,
+                           subject_weight, 
+                           medium_weight,
+                           style_weight,
+                           modifiers_weight
+                       ],
+                       outputs = [rec_validation_state])
+    
     generate_btn.click(
         fn=show_latent,
+        inputs = [rec_validation_state],
         outputs=[output_image]
     )
 
@@ -430,12 +469,14 @@ with gr.Blocks(theme=theme) as demo:
             style_weight,
             modifiers_weight,
             locked_elements,
+            rec_validation_state
         ],
         outputs=[output_image, output_gallery, rating_row, gallery_row],
     )
     output_image.change(fn=update_iteration, outputs=[iteration_display])
+
     gallery_submit.click(
-        fn=show_gallery, outputs=[gallery_row, output_gallery, output_image]
+        fn=show_gallery, outputs=[gallery_row, output_gallery, output_image, advanced_checkbox, advanced_tab]
     )
 
 proxy_prefix = os.environ.get("PROXY_PREFIX")
