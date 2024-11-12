@@ -131,6 +131,61 @@ class ArtRecSystem(GenRecSystem):
         # Finally we increment our iteration count
         self._iteration += 1
 
+    from typing import List
+
+    def validate_inputs(
+        self,
+        rating: float,
+        freeze_elements: List[str],
+        preference_weights: List[float],
+    ) -> None:
+        """
+        Validates the input parameters for the recommendation process, ensuring 
+        they meet expected types, ranges, and allowable values.
+
+        Args:
+            rating (float): User rating for the current image, expected to be between -1.0 and 1.0.
+            freeze_elements (List[str]): List of elements to freeze in the recommendation process.
+                                        Each element must be a string and must be one of the 
+                                        allowed prompt elements defined in the system.
+            preference_weights (List[float]): List of weights for user preferences, where each
+                                            weight is a float between 0.0 and 1.0.
+
+        Raises:
+            ValueError: If any of the input parameters do not meet the expected types or 
+                        constraints. Specifically:
+                        - If `rating` is not a float or is out of the -1.0 to 1.0 range.
+                        - If `freeze_elements` is not a list of strings or contains elements 
+                        not in the allowed prompt elements.
+                        - If `preference_weights` is not a list of floats or contains values 
+                        outside the 0.0 to 1.0 range.
+        """
+        # Validate rating
+        if not isinstance(rating, float):
+            raise ValueError("Rating must be a float.")
+        if not -1.0 <= rating <= 1.0:
+            raise ValueError("Rating must be between -1.0 and 1.0.")
+        
+        # Validate freeze_elements
+        allowed_elements = list(set(self._prompt_elements))
+        if not isinstance(freeze_elements, list):
+            raise ValueError("Freeze elements must be a list.")
+        if not all(isinstance(element, str) for element in freeze_elements):
+            raise ValueError("Each element in freeze_elements must be a string.")
+        if not all(element in allowed_elements for element in freeze_elements):
+            raise ValueError(
+                f"Each element in freeze_elements must be one of the allowed elements: {allowed_elements}"
+            )
+        
+        # Validate preference_weights
+        if not isinstance(preference_weights, list):
+            raise ValueError("Preference weights must be a list.")
+        if not all(isinstance(weight, float) for weight in preference_weights):
+            raise ValueError("Each weight in preference_weights must be a float.")
+        if not all(0.0 <= weight <= 1.0 for weight in preference_weights):
+            raise ValueError("Each weight in preference_weights must be between 0.0 and 1.0.")
+
+    
     def __call__(
         self,
         rating: float = 0.0,
@@ -147,7 +202,15 @@ class ArtRecSystem(GenRecSystem):
 
         Returns:
             str: URL of the next generated image based on the current prompt.
+        Raises:
+            ValueError: If any of the input parameters do not meet the expected types or 
+                        constraints as specified in validate_inputs.
         """
+
+        self.validate_inputs(rating,
+                             freeze_elements,
+                             preference_weights)
+        
         # Save the current frozen elements and update with new ones
         old_frozen_elements = self._frozen_elements.copy()
         if freeze_elements:
