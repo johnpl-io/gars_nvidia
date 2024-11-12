@@ -232,6 +232,13 @@ green_custom = gr.themes.utils.colors.Color(
     c950="#0b1200",
 )
 
+css = """
+#right-aligned-button {
+    display: flex;
+    justify-content: flex-end;
+}
+"""
+
 theme = gr.themes.Base(
     primary_hue=green_custom,
     secondary_hue=green_custom,
@@ -260,7 +267,7 @@ def show_gallery():
     }
 
 
-with gr.Blocks(theme=theme) as demo:
+with gr.Blocks(theme=theme, css=css) as demo:
     with gr.Row():
         with gr.Column("initial setup wrapper") as initial_setup:
             with gr.Tab("Initial Setup", visible=True):
@@ -365,6 +372,8 @@ with gr.Blocks(theme=theme) as demo:
         with gr.Column("GARS", visible=False) as GARS:
             with gr.Tab("GARS"):
                 iteration_display = gr.Markdown("## Iteration: ", visible=True)
+                with gr.Row(visible=True, elem_id="right-aligned-button") as restart_row:
+                    restart_btn = gr.Button("Restart", scale=0)
                 output_image = gr.Image(streaming=not dummy, label="Output Image", visible=True)
                 output_gallery = gr.Gallery(
                     label="Generated images",
@@ -374,14 +383,13 @@ with gr.Blocks(theme=theme) as demo:
                     height="auto",
                     visible=False,
                 )
+
                 with gr.Row(visible=True) as rating_row:
                     rating = gr.Slider(
                         -1, 1, value=0, label="Rating", minimum=-1, maximum=1, scale=3
                     )
                     generate_btn = gr.Button("Generate", scale=1)
-
-                with gr.Row(visible=True) as restart_row:
-                    restart_btn = gr.Button("Restart", scale=1)
+                    
                 with gr.Row(visible=False) as gallery_row:
                     gallery_submit = gr.Button("Show Gallery")
 
