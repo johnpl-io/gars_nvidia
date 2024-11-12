@@ -16,6 +16,23 @@ def check_preferences(element_checkboxes, element_preferences):
     return return_list
 
 
+
+def gars_session_validation(iteration_count, 
+                            custom_preference_subject,
+                            custom_preference_style,
+                            custom_preference_medium):
+    if not isinstance(iteration_count, int):
+        error_message = "**Error**: Number of Iterations Must Be an Integer!"
+        gr.Warning(error_message)
+        return False
+    if iteration_count < 10 or iteration_count > 100:
+        error_message = "**Error**: Number of Iterations Must be Between 10 and 100!"
+        gr.Warning(error_message)
+        return False
+    return True
+    #return None, True
+
+
 def start_gars_session(
     iteration_count,
     sdxl_dropdown,
@@ -25,8 +42,19 @@ def start_gars_session(
     custom_preference_style,
     art_mediums_checkboxes,
     custom_preference_medium,
+    validation_state,
     progress=gr.Progress(track_tqdm=True),
 ):
+    if not validation_state:
+        return {
+            initial_setup: gr.update(visible=True),
+            GARS: gr.update(visible=False),
+            advanced_checkbox: gr.update(visible=False),
+            output_image: None,
+            output: None,
+            progress_bar: gr.update(visible=False)
+            }
+
     global rec_system, output_images  # Declare as global to modify outer variables
     initial_preferences = {
         "subjects": check_preferences(
@@ -160,7 +188,12 @@ theme = gr.themes.Base(
     neutral_hue="stone",
 )
 
-def show_progress():
+def show_progress(validation_state):
+    if not validation_state:
+        return {
+        progress_bar: gr.update(visible=False),
+        initial_setup: gr.update(visible=True),
+        }
     return {
         progress_bar: gr.update(visible=True),
         initial_setup: gr.update(visible=False),
@@ -179,6 +212,8 @@ with gr.Blocks(theme=theme) as demo:
     with gr.Row():
         with gr.Column("initial setup wrapper") as initial_setup:
             with gr.Tab("Initial Setup", visible=True):
+                validation_state = gr.State()
+                #validation_message = gr.Markdown(label="Validation Message", visible=True)
                 iteration_count = gr.Slider(
                     label="Iteration Count", value=15, minimum=10, maximum=100, step=1
                 )
@@ -348,7 +383,16 @@ with gr.Blocks(theme=theme) as demo:
         show_advanced, inputs=advanced_checkbox, outputs=advanced_tab
     )
 
-    submit_btn.click(fn=show_progress, outputs=[progress_bar, initial_setup])
+    submit_btn.click(fn=gars_session_validation,
+                     inputs = [
+                         iteration_count,
+                         custom_preference_subject,
+                         custom_preference_style,
+                         custom_preference_medium],
+                         outputs = [validation_state]
+                         #outputs = [validation_message, validation_state]
+                     )
+    submit_btn.click(fn=show_progress, inputs=[validation_state], outputs=[progress_bar, initial_setup])
     submit_btn.click(
         fn=start_gars_session,
         inputs=[
@@ -360,6 +404,7 @@ with gr.Blocks(theme=theme) as demo:
             custom_preference_style,
             art_mediums_checkboxes,
             custom_preference_medium,
+            validation_state
         ],
         outputs=[
             initial_setup,
