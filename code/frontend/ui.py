@@ -1,3 +1,7 @@
+import threading
+import time
+from pydoc import visiblename
+
 import gradio as gr
 import os
 from PIL import Image, ImageDraw
@@ -50,12 +54,12 @@ def start_gars_session(
         diffusion_steps = 2
     if sdxl_dropdown == "SDXL Lightning [4 Step]":
         diffusion_steps = 4
-
+    progress(0, desc="Starting")
     rec_system = ArtRecSystem(
         total_iterations=iteration_count,
         initial_preferences=initial_preferences,
         diffusion_steps=diffusion_steps,
-        dummy=True,
+        dummy=False,
     )
 
     gen_img = rec_system(0)
@@ -66,6 +70,8 @@ def start_gars_session(
         GARS: gr.update(visible=True),
         advanced_checkbox: gr.update(visible=True),
         output_image: gen_img,
+        output: "dummy",
+        progress_bar: gr.update(visible=False)
     }
 
 
@@ -76,11 +82,9 @@ def generate_rec(
     style_weight,
     modifiers_weight,
     locked_elements,
-    progress=gr.Progress(track_tqdm=True),
 ):
     global output_images
     gen_img = None
-    progress(0, desc="Starting")
     if locked_elements:
         lock_element_list = []
         if "Modifiers" in locked_elements:
@@ -126,6 +130,12 @@ def generate_rec(
         }
     return None
 
+def show_latent():
+    while True:
+        item = rec_system.diffusion_pipeline.queue.get()
+        if item is None:
+            break
+        yield item
 
 def update_iteration():
     return f"## Iteration: {rec_system._iteration} / {rec_system._total_iterations}"
@@ -154,6 +164,12 @@ theme = gr.themes.Base(
     secondary_hue=green_custom,
     neutral_hue="stone",
 )
+
+def show_progress():
+    return {
+        progress_bar: gr.update(visible=True),
+        initial_setup: gr.update(visible=False),
+    }
 
 
 def show_gallery():
@@ -258,12 +274,17 @@ with gr.Blocks(theme=theme) as demo:
                         value="SDXL Lightning [8 Step]",
                         interactive=True,
                     )
-
                 submit_btn = gr.Button("Submit")
+
+
+        with gr.Column("Out", visible=False) as progress_bar:
+            with gr.Tab("out", visible=True):
+                output = gr.Textbox(label="Loading Model...", placeholder="Waiting on preference", visible=True)
+
         with gr.Column("GARS", visible=False) as GARS:
             with gr.Tab("GARS"):
                 iteration_display = gr.Markdown("## Iteration: ", visible=True)
-                output_image = gr.Image(label="Output Image", visible=True)
+                output_image = gr.Image(streaming=True, label="Output Image", visible=True)
                 output_gallery = gr.Gallery(
                     label="Generated images",
                     show_label=False,
@@ -332,6 +353,7 @@ with gr.Blocks(theme=theme) as demo:
         show_advanced, inputs=advanced_checkbox, outputs=advanced_tab
     )
 
+    submit_btn.click(fn=show_progress, outputs=[progress_bar, initial_setup])
     submit_btn.click(
         fn=start_gars_session,
         inputs=[
@@ -350,7 +372,13 @@ with gr.Blocks(theme=theme) as demo:
             advanced_checkbox,
             output_image,
             iteration_display,
+            output,
+            progress_bar,
         ],
+    )
+    generate_btn.click(
+        fn=show_latent,
+        outputs=[output_image]
     )
 
     generate_btn.click(
@@ -371,4 +399,5 @@ with gr.Blocks(theme=theme) as demo:
     )
 
 proxy_prefix = os.environ.get("PROXY_PREFIX")
+
 demo.launch(server_name="0.0.0.0", server_port=8080, root_path=proxy_prefix)
