@@ -19,11 +19,11 @@ def check_preferences(element_checkboxes, element_preferences):
 
 def gars_session_validation(iteration_count):
     if not isinstance(iteration_count, int):
-        error_message = "**Error**: Number of Iterations Must Be an Integer!"
+        error_message = "Number of Iterations Must Be an Integer!"
         gr.Warning(error_message)
         return False
     if iteration_count < 10 or iteration_count > 100:
-        error_message = "**Error**: Number of Iterations Must be Between 10 and 100!"
+        error_message = "Number of Iterations Must be Between 10 and 100!"
         gr.Warning(error_message)
         return False
     return True
@@ -76,7 +76,7 @@ def start_gars_session(
         total_iterations=iteration_count,
         initial_preferences=initial_preferences,
         diffusion_steps=diffusion_steps,
-        dummy=dummy,
+        dummy=dummy
     )
 
     gen_img = rec_system(0)
@@ -86,9 +86,11 @@ def start_gars_session(
         initial_setup: gr.update(visible=False),
         GARS: gr.update(visible=True),
         advanced_checkbox: gr.update(visible=True),
-        output_image: gen_img,
+        output_image: gr.update(visible=True, value=gen_img),
         output: "dummy",
-        progress_bar: gr.update(visible=False)
+        progress_bar: gr.update(visible=False),
+        restart_row: gr.update(visible=True),
+        rating_row: gr.update(visible=True)
     }
 
 
@@ -107,7 +109,7 @@ def rec_validation(rating,
     for arg_name in args:
         arg = args[arg_name]
         if not (isinstance(arg[0], float) or isinstance(arg[0], int)):
-            error_message = f"{arg[0]} must be a number from {arg[0]} to {arg[1]}"
+            error_message = f"{arg[0]} must be a number from {arg[0]} to {arg[1]}!"
             gr.Warning(error_message)
             return False
     return True
@@ -196,6 +198,24 @@ def update_iteration():
 
 def show_advanced(status):
     return {advanced_tab: gr.update(visible=status)}
+
+
+
+
+def restart_session():
+    global output_images
+    output_images = []
+    
+    return {
+        initial_setup: gr.update(visible=True),
+        GARS: gr.update(visible=False),
+        advanced_checkbox: gr.update(visible=False),
+        advanced_tab: gr.update(visible=False),
+        output_image: None,
+        output_gallery: gr.update(visible=False),
+        gallery_row: gr.update(visible=False),
+        restart_row: gr.update(visible=False)
+    }
 
 green_custom = gr.themes.utils.colors.Color(
     name="green_custom",
@@ -359,8 +379,12 @@ with gr.Blocks(theme=theme) as demo:
                         -1, 1, value=0, label="Rating", minimum=-1, maximum=1, scale=3
                     )
                     generate_btn = gr.Button("Generate", scale=1)
+
+                with gr.Row(visible=True) as restart_row:
+                    restart_btn = gr.Button("Restart", scale=1)
                 with gr.Row(visible=False) as gallery_row:
                     gallery_submit = gr.Button("Show Gallery")
+
         with gr.Column("Settings", visible=False) as advanced_tab:
             with gr.Tab("Advanced Options"):
                 gr.Markdown(" Lock Elements")
@@ -439,8 +463,11 @@ with gr.Blocks(theme=theme) as demo:
             advanced_checkbox,
             output_image,
             iteration_display,
+            output_image,
             output,
             progress_bar,
+            restart_row,
+            rating_row
         ],
     )
 
@@ -475,9 +502,23 @@ with gr.Blocks(theme=theme) as demo:
     )
     output_image.change(fn=update_iteration, outputs=[iteration_display])
 
+    restart_btn.click(
+        fn=restart_session,
+        outputs = [
+            initial_setup,
+            GARS,
+            advanced_checkbox,
+            advanced_tab,
+            output_image,
+            output_gallery,
+            gallery_row,
+            restart_row
+            ]
+    )
     gallery_submit.click(
         fn=show_gallery, outputs=[gallery_row, output_gallery, output_image, advanced_checkbox, advanced_tab]
     )
+    
 
 proxy_prefix = os.environ.get("PROXY_PREFIX")
 
