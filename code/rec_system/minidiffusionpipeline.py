@@ -1,6 +1,8 @@
+import queue
 from asyncio import current_task
 from base64 import decode
 from gc import callbacks
+from queue import Queue
 
 import torch
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
@@ -51,6 +53,7 @@ class MiniDiffusionPipeline:
             # Set real text-to-image function
             self.text2img = self.txt2imgreal
             self.latent_img = []
+            self.queue = queue.Queue()
             self.current_step = 0
         else:
             # Use mock function for text-to-image when mock mode is enabled
@@ -89,7 +92,7 @@ class MiniDiffusionPipeline:
     def decode_tensors(self, pipe, step, timestep, callback_kwargs):
         latents = callback_kwargs["latents"]
         image = self.latents_to_rgb(latents)
-        self.latent_img.append(image)
+        self.queue.put(image)
         self.current_step = step
         return callback_kwargs
 

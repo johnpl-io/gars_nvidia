@@ -1,3 +1,4 @@
+import threading
 import time
 from pydoc import visiblename
 
@@ -130,16 +131,12 @@ def generate_rec(
     return None
 
 def show_latent():
-    print("hi")
-    print(rec_system.diffusion_pipeline.current_step)
-    while(rec_system.diffusion_pipeline.current_step) == 0  or rec_system.diffusion_pipeline.current_step == rec_system.diffusion_pipeline.inference_steps - 1:
-        time.sleep(0.1)
-    while rec_system.diffusion_pipeline.current_step < rec_system.diffusion_pipeline.inference_steps - 1:
-        print("less than 8")
-        print(rec_system.diffusion_pipeline.current_step)
-        time.sleep(0.1)
-        yield {output_image: rec_system.diffusion_pipeline.latent_img[-1]}
-    yield {output_image: rec_system.diffusion_pipeline.latent_img[-1]}
+    while True:
+        item = rec_system.diffusion_pipeline.queue.get()
+        if item is None:
+            break
+        yield item
+
 def update_iteration():
     return f"## Iteration: {rec_system._iteration} / {rec_system._total_iterations}"
 
@@ -279,7 +276,7 @@ with gr.Blocks(theme=theme) as demo:
                     )
                 submit_btn = gr.Button("Submit")
 
-    # not descriptive enough
+
         with gr.Column("Out", visible=False) as progress_bar:
             with gr.Tab("out", visible=True):
                 output = gr.Textbox(label="Loading Model...", placeholder="Waiting on preference", visible=True)
@@ -402,4 +399,5 @@ with gr.Blocks(theme=theme) as demo:
     )
 
 proxy_prefix = os.environ.get("PROXY_PREFIX")
+
 demo.launch(server_name="0.0.0.0", server_port=8080, root_path=proxy_prefix)
