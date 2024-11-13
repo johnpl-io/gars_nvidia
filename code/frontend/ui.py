@@ -2,13 +2,24 @@ import gradio as gr
 import os
 from rec_system.art_rec import ArtRecSystem
 
+# Global variables
 image_pipeline = None
 rec_system = None
-output_images = []
-dummy=True
-validation_state = False
+output_images = []  # Stores generated images throughout the session
+dummy = True  # Dummy flag for testing purposes
+validation_state = False  # Tracks if input validation is successful
 
 def check_preferences(element_checkboxes, element_preferences):
+    """
+    Combines selected checkboxes and custom preferences into a single list.
+
+    Args:
+        element_checkboxes (list): List of selected options from checkboxes.
+        element_preferences (str): Custom preference entered by the user.
+
+    Returns:
+        list: Combined list of checkboxes and custom preferences.
+    """
     return_list = []
     if len(element_checkboxes) > 0:
         return_list = element_checkboxes
@@ -17,6 +28,15 @@ def check_preferences(element_checkboxes, element_preferences):
     return return_list
 
 def gars_session_validation(iteration_count):
+    """
+    Validates the session configuration for the GARS system.
+
+    Args:
+        iteration_count (int): Number of iterations for the session.
+
+    Updates:
+        validation_state (bool): Indicates if the validation passed.
+    """
     global validation_state
     if not isinstance(iteration_count, int):
         error_message = "Number of Iterations Must Be an Integer!"
@@ -29,7 +49,6 @@ def gars_session_validation(iteration_count):
     else:
         validation_state = True
 
-
 def start_gars_session(
     iteration_count,
     sdxl_dropdown,
@@ -41,27 +60,39 @@ def start_gars_session(
     custom_preference_medium,
     progress=gr.Progress(track_tqdm=True),
 ):
-    gars_session_validation(iteration_count)
+    """
+    Starts a new GARS (Generative Art Recommendation System) session.
 
-    global rec_system, output_images  # Declare as global to modify outer variables
+    Args:
+        iteration_count (int): Number of iterations for generating recommendations.
+        sdxl_dropdown (str): Dropdown choice for the diffusion steps.
+        subjects_checkboxes (list): Selected subjects for recommendations.
+        custom_preference_subject (str): Custom subject preference.
+        styles_checkboxes (list): Selected art styles.
+        custom_preference_style (str): Custom style preference.
+        art_mediums_checkboxes (list): Selected art mediums.
+        custom_preference_medium (str): Custom art medium preference.
+        progress (gr.Progress): Gradio progress tracker.
+
+    Returns:
+        dict: Updates UI elements based on session initialization.
+    """
+    gars_session_validation(iteration_count)
+    global rec_system, output_images
+
     initial_preferences = {
-        "subjects": check_preferences(
-            subjects_checkboxes, custom_preference_subject
-        ),
-        "artists_movements": check_preferences(
-            styles_checkboxes, custom_preference_style
-        ),
-        "art_mediums": check_preferences(
-            art_mediums_checkboxes, custom_preference_medium
-        ),
+        "subjects": check_preferences(subjects_checkboxes, custom_preference_subject),
+        "artists_movements": check_preferences(styles_checkboxes, custom_preference_style),
+        "art_mediums": check_preferences(art_mediums_checkboxes, custom_preference_medium),
     }
 
-    # Initialize the ArtRecSystem with the given preferences
+    # Set diffusion steps based on dropdown selection
     diffusion_steps = 8
     if sdxl_dropdown == "SDXL Lightning [2 Step]":
         diffusion_steps = 2
-    if sdxl_dropdown == "SDXL Lightning [4 Step]":
+    elif sdxl_dropdown == "SDXL Lightning [4 Step]":
         diffusion_steps = 4
+
     progress(0, desc="Starting")
     rec_system = ArtRecSystem(
         total_iterations=iteration_count,
@@ -70,6 +101,7 @@ def start_gars_session(
         dummy=dummy
     )
 
+    # Generate the first image
     gen_img = rec_system(0.0)
     output_images.append(gen_img)
 
@@ -84,7 +116,6 @@ def start_gars_session(
         rating_row: gr.update(visible=True)
     }
     
-
 def generate_rec(
     rating,
     subject_weight,
@@ -93,55 +124,52 @@ def generate_rec(
     modifiers_weight,
     locked_elements
 ):
+    """
+    Generates a new recommendation based on user feedback and preferences.
+
+    Args:
+        rating (float): User rating for the previous recommendation.
+        subject_weight (float): Weight for subject preference.
+        medium_weight (float): Weight for medium preference.
+        style_weight (float): Weight for style preference.
+        modifiers_weight (float): Weight for modifiers preference.
+        locked_elements (list): Elements to lock in the recommendation.
+
+    Returns:
+        dict: Updates UI elements with the generated recommendation and gallery.
+    """
     global output_images
-    
-    gen_img = None
-    if locked_elements:
-        lock_element_list = []
-        if "Modifiers" in locked_elements:
-            lock_element_list.append("modifiers")
-        if "Subject" in locked_elements:
-            lock_element_list.append("subjects")
-        if "Medium" in locked_elements:
-            lock_element_list.append("art_mediums")
-        if "Style" in locked_elements:
-            lock_element_list.append("artists_movements")
 
-        gen_img = rec_system(
-            rating=rating,
-            preference_weights=[
-                modifiers_weight,
-                subject_weight,
-                medium_weight,
-                style_weight,
-            ],
-            freeze_elements=lock_element_list,
-        )
+    lock_element_list = [elem.lower() for elem in locked_elements] if locked_elements else []
 
-    else:
-        gen_img = rec_system(
-            rating=rating,
-            preference_weights=[
-                modifiers_weight,
-                subject_weight,
-                medium_weight,
-                style_weight,
-            ],
-        )
+    gen_img = rec_system(
+        rating=rating,
+        preference_weights=[
+            modifiers_weight,
+            subject_weight,
+            medium_weight,
+            style_weight,
+        ],
+        freeze_elements=lock_element_list,
+    )
 
     output_images.append(gen_img)
-    if rec_system.is_done:
-        row_visibility = False
-    if rec_system:
-        return {
-            output_image: gen_img,
-            output_gallery: output_images,
-            rating_row: gr.update(visible=not rec_system.is_done),
-            gallery_row: gr.update(visible=rec_system.is_done),
-        }
-    return None
+    row_visibility = not rec_system.is_done
+
+    return {
+        output_image: gen_img,
+        output_gallery: output_images,
+        rating_row: gr.update(visible=row_visibility),
+        gallery_row: gr.update(visible=not row_visibility),
+    }
 
 def show_latent():
+    """
+    Streams latent images for testing or live preview.
+
+    Yields:
+        str: URL of the dummy image if in dummy mode, otherwise streams from the diffusion queue.
+    """
     if dummy:
         yield "https://fal-cdn.batuhan-941.workers.dev/files/koala/-CQBCeIxrvPqrvt4FDY5n.jpeg"
     else:
@@ -152,19 +180,36 @@ def show_latent():
             yield item
 
 def update_iteration():
+    """
+    Provides current iteration status in the GARS session.
+
+    Returns:
+        str: Formatted iteration status.
+    """
     return f"## Iteration: {rec_system._iteration} / {rec_system._total_iterations}"
 
-
 def show_advanced(status):
+    """
+    Toggles the advanced options tab visibility.
+
+    Args:
+        status (bool): Desired visibility status of the advanced tab.
+
+    Returns:
+        dict: Updates UI visibility of the advanced tab.
+    """
     return {advanced_tab: gr.update(visible=status)}
 
-
-
-
 def restart_session():
+    """
+    Restarts the GARS session, resetting output images and UI elements.
+
+    Returns:
+        dict: UI reset to initial setup visibility.
+    """
     global output_images
     output_images = []
-    
+
     return {
         initial_setup: gr.update(visible=True),
         GARS: gr.update(visible=False),
@@ -175,6 +220,43 @@ def restart_session():
         gallery_row: gr.update(visible=False),
         restart_row: gr.update(visible=False)
     }
+
+def show_progress(iteration_count):
+    """
+    Validates iteration count and toggles progress bar visibility accordingly.
+
+    Args:
+        iteration_count (int): Number of iterations.
+
+    Returns:
+        dict: UI updates based on validation outcome.
+    """
+    gars_session_validation(iteration_count)
+    if not validation_state:
+        return {
+            progress_bar: gr.update(visible=False),
+            initial_setup: gr.update(visible=True),
+        }
+    return {
+        progress_bar: gr.update(visible=True),
+        initial_setup: gr.update(visible=False),
+    }
+
+def show_gallery():
+    """
+    Displays the output gallery and hides other UI elements.
+
+    Returns:
+        dict: UI updates to show gallery view.
+    """
+    return {
+        output_gallery: gr.update(visible=True),
+        gallery_row: gr.update(visible=False),
+        output_image: gr.update(visible=False),
+        advanced_checkbox: gr.update(visible=False),
+        advanced_tab: gr.update(visible=False)
+    }
+
 
 green_custom = gr.themes.utils.colors.Color(
     name="green_custom",
@@ -190,40 +272,15 @@ green_custom = gr.themes.utils.colors.Color(
     c900="#233700",
     c950="#0b1200",
 )
+
 with open(os.path.join("frontend", "ui.css"), "r") as f:
     css = f.read()
-
-
-
 
 theme = gr.themes.Base(
     primary_hue=green_custom,
     secondary_hue=green_custom,
     neutral_hue="stone",
 )
-
-def show_progress(iteration_count):
-    gars_session_validation(iteration_count)
-    if not validation_state:
-        return {
-        progress_bar: gr.update(visible=False),
-        initial_setup: gr.update(visible=True),
-        }
-    return {
-        progress_bar: gr.update(visible=True),
-        initial_setup: gr.update(visible=False),
-    }
-
-
-def show_gallery():
-    return {
-        output_gallery: gr.update(visible=True),
-        gallery_row: gr.update(visible=False),
-        output_image: gr.update(visible=False),
-        advanced_checkbox: gr.update(visible=False),
-        advanced_tab: gr.update(visible=False)
-    }
-
 
 with gr.Blocks(theme=theme, css=css) as demo:
     with gr.Row():
