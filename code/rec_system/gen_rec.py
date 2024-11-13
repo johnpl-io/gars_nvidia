@@ -139,7 +139,7 @@ class GenRecSystem(ABC):
             str: URL of the generated image.
         """
         prompt = self._get_prompt()
-        image_content = self.diffusion_pipeline._text2img(prompt)
+        image_content = self.diffusion_pipeline.text2img(prompt)
         return image_content
 
     def _get_num_neighbors(self, total: int) -> int:

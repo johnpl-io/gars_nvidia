@@ -1,0 +1,135 @@
+/* General Button Styling for All Buttons */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+/* Start Over Button */
+#start-over-button {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#start-over-button button {
+    background-color: #4CAF50; /* Green background */
+}
+
+#start-over-button button:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+
+#start-over-button button:active {
+    background-color: #388E3C;
+    transform: scale(1);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#start-over-button button:focus {
+    outline: none;
+    box-shadow: 0px 0px 5px 2px rgba(76, 175, 80, 0.5);
+}
+
+/* Submit Button */
+#submit-button {
+    background-color: #28a745; /* Green background */
+}
+
+#submit-button:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+#submit-button:active {
+    background-color: #1e7e34;
+    transform: scale(0.98);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#submit-button:focus {
+    outline: none;
+    box-shadow: 0px 0px 6px 3px rgba(40, 167, 69, 0.5);
+}
+
+/* Generate Button */
+#generate-button {
+    background-color: #007BFF; /* Blue background */
+}
+
+#generate-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+#generate-button:active {
+    background-color: #004085;
+    transform: scale(0.98);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#generate-button:focus {
+    outline: none;
+    box-shadow: 0px 0px 6px 3px rgba(0, 123, 255, 0.5);
+}
+
+/* Show Gallery Button */
+#show-gallery-button {
+    background-color: #6c757d; /* Gray background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#show-gallery-button:hover {
+    background-color: #5a6268;
+    transform: scale(1.05);
+}
+
+#show-gallery-button:active {
+    background-color: #545b62;
+    transform: scale(0.98);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#show-gallery-button:focus {
+    outline: none;
+    box-shadow: 0px 0px 6px 3px rgba(108, 117, 125, 0.5);
+}
+
+
+/* Gallery Container */
+#gallery {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive columns */
+    gap: 20px; /* Space between images */
+    padding: 20px; /* Padding around the gallery */
+    background-color: #1d1f22; /* Dark background */
+    border-radius: 12px; /* Rounded corners for gallery */
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25); /* Shadow for gallery container */
+}
+
+/* Gallery Image Styling */
+#gallery img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px; /* Rounded corners for images */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow around images */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Image Hover Effect */
+#gallery img:hover {
+    transform: scale(1.05); /* Slight zoom on hover */
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+}
+
+/* Image Active State */
+#gallery img:active {
+    transform: scale(0.98); /* Slight shrink on click */
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3); /* Reduced shadow when active */
+}

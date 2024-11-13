@@ -6,7 +6,7 @@ from db.vector_db_manager import VectorDBManager
 import numpy as np
 from typing import List
 import time
-
+import warnings
 
 class ArtRecSystem(GenRecSystem):
     """
@@ -150,19 +150,20 @@ class ArtRecSystem(GenRecSystem):
                                             weight is a float between 0.0 and 1.0.
 
         Raises:
-            ValueError: If any of the input parameters do not meet the expected types or 
+            ValueError: If certain input parameters do not meet the expected types or 
                         constraints. Specifically:
-                        - If `rating` is not a float or is out of the -1.0 to 1.0 range.
                         - If `freeze_elements` is not a list of strings or contains elements 
                         not in the allowed prompt elements.
                         - If `preference_weights` is not a list of floats or contains values 
                         outside the 0.0 to 1.0 range.
+            UserWarning: If the rating is outside of the range from -1.0 to 1.0 as the recommendation system
+                        has only been tested on these values.
         """
         # Validate rating
-        if not (isinstance(rating, float) or isinstance(rating, int)):
-            raise ValueError("Rating must be a float.")
+        if not isinstance(rating, (float, int)):
+            raise ValueError("Rating must be a number.")
         if not -1.0 <= rating <= 1.0:
-            raise ValueError("Rating must be between -1.0 and 1.0.")
+            warnings.warn("Our recommendation system was only tested with ratings ranging from -1.0 to 1.0. ")
         
         # Validate freeze_elements
         allowed_elements = list(set(self._prompt_elements))

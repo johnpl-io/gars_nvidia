@@ -6,6 +6,7 @@ image_pipeline = None
 rec_system = None
 output_images = []
 dummy=True
+validation_state = False
 
 def check_preferences(element_checkboxes, element_preferences):
     return_list = []
@@ -15,18 +16,18 @@ def check_preferences(element_checkboxes, element_preferences):
         return_list.append(element_preferences)
     return return_list
 
-
-
 def gars_session_validation(iteration_count):
+    global validation_state
     if not isinstance(iteration_count, int):
         error_message = "Number of Iterations Must Be an Integer!"
         gr.Warning(error_message)
-        return False
-    if iteration_count < 10 or iteration_count > 100:
+        validation_state = False
+    elif iteration_count < 10 or iteration_count > 100:
         error_message = "Number of Iterations Must be Between 10 and 100!"
         gr.Warning(error_message)
-        return False
-    return True
+        validation_state = False
+    else:
+        validation_state = True
 
 
 def start_gars_session(
@@ -38,18 +39,9 @@ def start_gars_session(
     custom_preference_style,
     art_mediums_checkboxes,
     custom_preference_medium,
-    validation_state,
     progress=gr.Progress(track_tqdm=True),
 ):
-    if not validation_state:
-        return {
-            initial_setup: gr.update(visible=True),
-            GARS: gr.update(visible=False),
-            advanced_checkbox: gr.update(visible=False),
-            output_image: None,
-            output: None,
-            progress_bar: gr.update(visible=False)
-            }
+    gars_session_validation(iteration_count)
 
     global rec_system, output_images  # Declare as global to modify outer variables
     initial_preferences = {
@@ -91,27 +83,6 @@ def start_gars_session(
         restart_row: gr.update(visible=True),
         rating_row: gr.update(visible=True)
     }
-
-
-def rec_validation(rating,
-                   subject_weight, 
-                   medium_weight,
-                   style_weight,
-                   modifiers_weight):
-    args = {
-        "Rating": [rating, 0,1],
-        "Subject Weight": [subject_weight, 0, 1],
-        "Medium Weight": [medium_weight, 0, 1],
-        "Style Weight": [style_weight, 0, 1],
-        "Modifers Weight": [modifiers_weight, 0, 1]
-    }
-    for arg_name in args:
-        arg = args[arg_name]
-        if not (isinstance(arg[0], float) or isinstance(arg[0], int)):
-            error_message = f"{arg[0]} must be a number from {arg[0]} to {arg[1]}!"
-            gr.Warning(error_message)
-            return False
-    return True
     
 
 def generate_rec(
@@ -120,18 +91,9 @@ def generate_rec(
     medium_weight,
     style_weight,
     modifiers_weight,
-    locked_elements,
-    rec_validation_state
+    locked_elements
 ):
     global output_images
-
-    if not rec_validation_state:
-        return {
-            output_image: None,
-            output_gallery: output_images,
-            rating_row: gr.update(visible=not rec_system.is_done),
-            gallery_row: gr.update(visible=rec_system.is_done),
-        }
     
     gen_img = None
     if locked_elements:
@@ -179,9 +141,7 @@ def generate_rec(
         }
     return None
 
-def show_latent(rec_validation_state):
-    if not rec_validation_state:
-        yield None
+def show_latent():
     if dummy:
         yield "https://fal-cdn.batuhan-941.workers.dev/files/koala/-CQBCeIxrvPqrvt4FDY5n.jpeg"
     else:
@@ -230,13 +190,11 @@ green_custom = gr.themes.utils.colors.Color(
     c900="#233700",
     c950="#0b1200",
 )
+with open(os.path.join("frontend", "ui.css"), "r") as f:
+    css = f.read()
 
-css = """
-#right-aligned-button {
-    display: flex;
-    justify-content: flex-end;
-}
-"""
+
+
 
 theme = gr.themes.Base(
     primary_hue=green_custom,
@@ -244,7 +202,8 @@ theme = gr.themes.Base(
     neutral_hue="stone",
 )
 
-def show_progress(validation_state):
+def show_progress(iteration_count):
+    gars_session_validation(iteration_count)
     if not validation_state:
         return {
         progress_bar: gr.update(visible=False),
@@ -270,7 +229,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
     with gr.Row():
         with gr.Column("initial setup wrapper") as initial_setup:
             with gr.Tab("Initial Setup", visible=True):
-                init_validation_state = gr.State()
+
                 iteration_count = gr.Slider(
                     label="Iteration Count", value=15, minimum=10, maximum=100, step=1
                 )
@@ -308,7 +267,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
                             "Fashion",
                             "Travel",
                         ],
-                        label="Subjects",
+                        label="Subjects"
                     )
                     custom_preference_subject = gr.Textbox(
                         show_label=False, placeholder="Custom Subject"
@@ -327,7 +286,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
                             "Metalwork",
                             "Printmaking",
                         ],
-                        label="Mediums",
+                        label="Mediums"
                     )
                     custom_preference_medium = gr.Textbox(
                         show_label=False, placeholder="Custom Medium"
@@ -345,7 +304,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
                             "Expressionism",
                             "Minimalism",
                         ],
-                        label="Styles",
+                        label="Styles"
                     )
                     custom_preference_style = gr.Textbox(
                         show_label=False, placeholder="Custom Style"
@@ -359,9 +318,9 @@ with gr.Blocks(theme=theme, css=css) as demo:
                         ],
                         label="Model",
                         value="SDXL Lightning [8 Step]",
-                        interactive=True,
+                        interactive=True
                     )
-                submit_btn = gr.Button("Submit")
+                submit_btn = gr.Button("Submit", elem_id = "submit-button")
 
 
         with gr.Column("Out", visible=False) as progress_bar:
@@ -371,8 +330,8 @@ with gr.Blocks(theme=theme, css=css) as demo:
         with gr.Column("GARS", visible=False) as GARS:
             with gr.Tab("GARS"):
                 iteration_display = gr.Markdown("## Iteration: ", visible=True)
-                with gr.Row(visible=True, elem_id="right-aligned-button") as restart_row:
-                    restart_btn = gr.Button("Restart", scale=0)
+                with gr.Row(visible=True, elem_id = "start-over-button") as restart_row:
+                    restart_btn = gr.Button("Start Over", scale=0)
                 output_image = gr.Image(streaming=not dummy, label="Output Image", visible=True)
                 output_gallery = gr.Gallery(
                     label="Generated images",
@@ -387,19 +346,18 @@ with gr.Blocks(theme=theme, css=css) as demo:
                     rating = gr.Slider(
                         -1, 1, value=0, label="Rating", minimum=-1, maximum=1, scale=3
                     )
-                    generate_btn = gr.Button("Generate", scale=1)
+                    generate_btn = gr.Button("Generate", scale=1, elem_id="generate-button")
                     
                 with gr.Row(visible=False) as gallery_row:
-                    gallery_submit = gr.Button("Show Gallery")
+                    gallery_submit = gr.Button("Show Gallery", elem_id="show-gallery-button")
 
         with gr.Column("Settings", visible=False) as advanced_tab:
             with gr.Tab("Advanced Options"):
                 gr.Markdown(" Lock Elements")
                 locked_elements = gr.CheckboxGroup(
                     ["Subject", "Medium", "Style", "Modifiers"],
-                    show_label=False,
+                    show_label=False
                 )
-                rec_validation_state = gr.State()
                 gr.Markdown(" Adjust Element Weights")
                 with gr.Group():
                     subject_weight = gr.Slider(
@@ -446,11 +404,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
         show_advanced, inputs=advanced_checkbox, outputs=advanced_tab
     )
 
-    submit_btn.click(fn=gars_session_validation,
-                     inputs = [iteration_count],
-                         outputs = [init_validation_state]
-                     )
-    submit_btn.click(fn=show_progress, inputs=[init_validation_state], outputs=[progress_bar, initial_setup])
+    submit_btn.click(fn=show_progress, inputs = [iteration_count], outputs=[progress_bar, initial_setup])
     submit_btn.click(
         fn=start_gars_session,
         inputs=[
@@ -462,7 +416,6 @@ with gr.Blocks(theme=theme, css=css) as demo:
             custom_preference_style,
             art_mediums_checkboxes,
             custom_preference_medium,
-            init_validation_state
         ],
         outputs=[
             initial_setup,
@@ -477,20 +430,9 @@ with gr.Blocks(theme=theme, css=css) as demo:
             rating_row
         ],
     )
-
-    generate_btn.click(fn=rec_validation, 
-                       inputs =[
-                           rating,
-                           subject_weight, 
-                           medium_weight,
-                           style_weight,
-                           modifiers_weight
-                       ],
-                       outputs = [rec_validation_state])
     
     generate_btn.click(
         fn=show_latent,
-        inputs = [rec_validation_state],
         outputs=[output_image]
     )
 
@@ -502,8 +444,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
             medium_weight,
             style_weight,
             modifiers_weight,
-            locked_elements,
-            rec_validation_state
+            locked_elements
         ],
         outputs=[output_image, output_gallery, rating_row, gallery_row],
     )

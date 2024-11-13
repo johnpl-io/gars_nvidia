@@ -45,13 +45,13 @@ class MiniDiffusionPipeline:
             )
 
             # Set real text-to-image function
-            self._text2img = self._txt2imgreal
+            self.text2img = self._txt2imgreal
             self._latent_img = []
             self.queue = queue.Queue()
             self._current_step = 0
         else:
             # Use mock function for text-to-image when mock mode is enabled
-            self._text2img = self._txt2imgmock
+            self.text2img = self._txt2imgmock
 
     def _txt2imgreal(self, prompt: str) -> Image.Image:
         """
