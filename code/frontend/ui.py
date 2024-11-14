@@ -140,7 +140,13 @@ def generate_rec(
     """
     global output_images
 
-    lock_element_list = [elem.lower() for elem in locked_elements] if locked_elements else []
+    # map between ui "user friendly" names for prompt components and rec system names
+    rec_comp_map = {"Modifiers": "modifiers",
+                      "Medium": "art_mediums",
+                      "Style": "artists_movements",
+                      "Subject": "subjects"}
+
+    lock_element_list = [rec_comp_map[elem] for elem in locked_elements] if locked_elements else []
 
     gen_img = rec_system(
         rating=rating,
