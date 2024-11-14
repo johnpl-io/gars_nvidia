@@ -7,6 +7,7 @@ import numpy as np
 from typing import List
 import time
 import warnings
+from numbers import Number
 
 class ArtRecSystem(GenRecSystem):
     """
@@ -160,7 +161,7 @@ class ArtRecSystem(GenRecSystem):
                         has only been tested on these values.
         """
         # Validate rating
-        if not isinstance(rating, (float, int)):
+        if not isinstance(rating, Number):
             raise ValueError("Rating must be a number.")
         if not -1.0 <= rating <= 1.0:
             warnings.warn("Our recommendation system was only tested with ratings ranging from -1.0 to 1.0. ")
