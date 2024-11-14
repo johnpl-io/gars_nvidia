@@ -47,7 +47,8 @@ class MiniDiffusionPipeline:
             # Set real text-to-image function
             self.text2img = self._txt2imgreal
             self._latent_img = []
-            self.queue = queue.Queue()
+            self.is_gen_queue = queue.Queue()
+            self.latent_queue = queue.Queue()
             self._current_step = 0
         else:
             # Use mock function for text-to-image when mock mode is enabled
@@ -63,11 +64,14 @@ class MiniDiffusionPipeline:
         Returns:
             PIL.Image.Image: The generated image.
         """
-        return self._pipe(
+
+        ret = self._pipe(
             prompt, num_inference_steps=self._inference_steps, guidance_scale=0,
-        callback_on_step_end = self._decode_tensors,
-        callback_on_step_end_tensor_inputs = ["latents"],
+            callback_on_step_end=self._decode_tensors,
+            callback_on_step_end_tensor_inputs=["latents"],
         ).images[0]
+
+        return ret
 
     def _latents_to_rgb(self, latents):
         weights = (
@@ -86,7 +90,7 @@ class MiniDiffusionPipeline:
     def _decode_tensors(self, pipe, step, timestep, callback_kwargs):
         latents = callback_kwargs["latents"]
         image = self._latents_to_rgb(latents)
-        self.queue.put(image)
+        self.latent_queue.put(image)
         self._current_step = step
         return callback_kwargs
 
