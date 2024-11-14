@@ -49,7 +49,7 @@ class GenRecSystem(ABC):
         self._max_jump = max_jump
         self._total_iterations = total_iterations
         self._user_sample_stage_size = user_sample_stage_size
-        self.dummy = dummy  # Flag to use a dummy model for testing
+        self._dummy = dummy  # Flag to use a dummy model for testing
 
         # Load prompt elements and embedding size from configuration parameters
         self._prompt_elements = self._params["prompt_elements"]
@@ -63,7 +63,7 @@ class GenRecSystem(ABC):
         self._cur_user_embedding = np.zeros((num_elements, embedding_size))
 
         # Initialize user preferences and frozen elements
-        self.initialize_preferences(initial_preferences)
+        self._initialize_preferences(initial_preferences)
         self._frozen_elements = frozen_elements
         if self._frozen_elements:
             self._update_frozen_elements()
@@ -97,7 +97,7 @@ class GenRecSystem(ABC):
                 self._frozen_elements[element] = self._cur_prompt[index]
         self._update_frozen_elements()
 
-    def initialize_preferences(self, initial_preferences: dict):
+    def _initialize_preferences(self, initial_preferences: dict):
         """
         Sets up user preferences by generating initial embeddings from the provided preferences.
 
@@ -122,7 +122,7 @@ class GenRecSystem(ABC):
                     embedding * self._params["initialize_weight"]
                 )
 
-    def get_prompt(self) -> str:
+    def _get_prompt(self) -> str:
         """
         Retrieves the current generated prompt for the recommendation.
 
@@ -138,7 +138,7 @@ class GenRecSystem(ABC):
         Returns:
             str: URL of the generated image.
         """
-        prompt = self.get_prompt()
+        prompt = self._get_prompt()
         image_content = self.diffusion_pipeline.text2img(prompt)
         return image_content
 
