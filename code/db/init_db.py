@@ -24,7 +24,7 @@ def generate_embedding_api(client: OpenAI, text: str, model: str) -> List[float]
     return response.data[0].embedding
 
 
-def load_embedding(index : int, embedding_path: str) -> np.ndarray:
+def load_embedding(index: int, embedding_path: str) -> np.ndarray:
     """
     Load an embedding from a memory-mapped file.
 
@@ -40,7 +40,9 @@ def load_embedding(index : int, embedding_path: str) -> np.ndarray:
     return row
 
 
-def export_collection(db_client: MilvusClient, collection_name: str, file_name: str, params: dict) -> np.ndarray:
+def export_collection(
+    db_client: MilvusClient, collection_name: str, file_name: str, params: dict
+) -> np.ndarray:
     """
     Exports data from a text file into a Milvus collection, associating each text entry
     with a pre-generated embedding.
@@ -78,13 +80,11 @@ def export_collection(db_client: MilvusClient, collection_name: str, file_name: 
             enumerate(f), desc=f"Inserting data into {collection_name}"
         ):
             embedding = load_embedding(index, embedding_path)
-            data = [
-                {"id": index, "vector": embedding, "plain_text": line.strip()}
-            ]
+            data = [{"id": index, "vector": embedding, "plain_text": line.strip()}]
             db_client.insert(collection_name=collection_name, data=data)
 
         # Connect to the default database alias and flush to ensure all entries are saved
-        connections.connect(alias="default", uri='db/gars.db')
+        connections.connect(alias="default", uri="db/gars.db")
         collection = Collection(collection_name)
         collection.flush()
 

@@ -9,6 +9,7 @@ import time
 import warnings
 from numbers import Number
 
+
 class ArtRecSystem(GenRecSystem):
     """
     A recommendation system for generating art prompts based on user preferences.
@@ -59,12 +60,8 @@ class ArtRecSystem(GenRecSystem):
             dummy=dummy,
         )
 
-        self.is_done = (
-            False  # Flag to determine if recommendation session is complete
-        )
-        self._VDBManager = (
-            VectorDBManager()
-        )  # Vector database manager for performing similarity search for prompt elements
+        self.is_done = False  # Flag to determine if recommendation session is complete
+        self._VDBManager = VectorDBManager()  # Vector database manager for performing similarity search for prompt elements
 
     def _adjust_user_preference(self, rating: float):
         """
@@ -77,9 +74,7 @@ class ArtRecSystem(GenRecSystem):
             self._weights
         ).reshape(-1, 1)
         # Adjust user embedding with rating, scaled by max_jump
-        self._cur_user_embedding += (
-            weighted_image_embedding * rating * self._max_jump
-        )
+        self._cur_user_embedding += weighted_image_embedding * rating * self._max_jump
         # Apply decay to the user embedding
         self._cur_user_embedding *= self._decay_rate
 
@@ -91,9 +86,7 @@ class ArtRecSystem(GenRecSystem):
         embedding_size = self._cur_recommendation.shape[1]
         # reshape user vector into a matrix with each row representing their preference for
         # a corresponding prompt component (subject, style, etc.)
-        user_preferences = np.reshape(
-            self._cur_user_embedding, (-1, embedding_size)
-        )
+        user_preferences = np.reshape(self._cur_user_embedding, (-1, embedding_size))
 
         # For every prompt component
         for index, element in enumerate(self._prompt_elements):
@@ -124,9 +117,7 @@ class ArtRecSystem(GenRecSystem):
             chosen_prompt_element = self._VDBManager.find_by_id(
                 element, chosen_prompt_id
             )
-            self._cur_recommendation[vec_index] = chosen_prompt_element[
-                "vector"
-            ]
+            self._cur_recommendation[vec_index] = chosen_prompt_element["vector"]
             self._cur_prompt[index] = chosen_prompt_element["plain_text"]
 
         # Finally we increment our iteration count
@@ -139,23 +130,23 @@ class ArtRecSystem(GenRecSystem):
         preference_weights: List[float],
     ) -> None:
         """
-        Validates the input parameters for the recommendation process, ensuring 
+        Validates the input parameters for the recommendation process, ensuring
         they meet expected types, ranges, and allowable values.
 
         Args:
             rating (float): User rating for the current image, expected to be between -1.0 and 1.0.
             freeze_elements (List[str]): List of elements to freeze in the recommendation process.
-                                        Each element must be a string and must be one of the 
+                                        Each element must be a string and must be one of the
                                         allowed prompt elements defined in the system.
             preference_weights (List[float]): List of weights for user preferences, where each
                                             weight is a float between 0.0 and 1.0.
 
         Raises:
-            ValueError: If certain input parameters do not meet the expected types or 
+            ValueError: If certain input parameters do not meet the expected types or
                         constraints. Specifically:
-                        - If `freeze_elements` is not a list of strings or contains elements 
+                        - If `freeze_elements` is not a list of strings or contains elements
                         not in the allowed prompt elements.
-                        - If `preference_weights` is not a list of floats or contains values 
+                        - If `preference_weights` is not a list of floats or contains values
                         outside the 0.0 to 1.0 range.
             UserWarning: If the rating is outside of the range from -1.0 to 1.0 as the recommendation system
                         has only been tested on these values.
@@ -164,8 +155,10 @@ class ArtRecSystem(GenRecSystem):
         if not isinstance(rating, Number):
             raise ValueError("Rating must be a number.")
         if not -1.0 <= rating <= 1.0:
-            warnings.warn("Our recommendation system was only tested with ratings ranging from -1.0 to 1.0. ")
-        
+            warnings.warn(
+                "Our recommendation system was only tested with ratings ranging from -1.0 to 1.0. "
+            )
+
         # Validate freeze_elements
         allowed_elements = list(set(self._prompt_elements))
         if not isinstance(freeze_elements, list):
@@ -174,18 +167,22 @@ class ArtRecSystem(GenRecSystem):
             raise ValueError("Each element in freeze_elements must be a string.")
         if not all(element in allowed_elements for element in freeze_elements):
             raise ValueError(
-                f"Each element in freeze_elements must be one of the allowed elements: {allowed_elements}"
+                f" in freeze_elements must be one of the allowed elements: {allowed_elements}"
             )
-        
+
         # Validate preference_weights
         if not isinstance(preference_weights, list):
             raise ValueError("Preference weights must be a list.")
-        if not all(isinstance(weight, float) or isinstance(weight, int) for weight in preference_weights):
+        if not all(
+            isinstance(weight, float) or isinstance(weight, int)
+            for weight in preference_weights
+        ):
             raise ValueError("Each weight in preference_weights must be a float.")
         if not all(0.0 <= weight <= 1.0 for weight in preference_weights):
-            raise ValueError("Each weight in preference_weights must be between 0.0 and 1.0.")
+            raise ValueError(
+                "Each weight in preference_weights must be between 0.0 and 1.0."
+            )
 
-    
     def __call__(
         self,
         rating: float = 0.0,
@@ -203,14 +200,15 @@ class ArtRecSystem(GenRecSystem):
         Returns:
             str: URL of the next generated image based on the current prompt.
         Raises:
-            ValueError: If any of the input parameters do not meet the expected types or 
+            ValueError: If any of the input parameters do not meet the expected types or
                         constraints as specified in validate_inputs.
+            IndexError: If the ArtRecSystem session is called after completion
         """
+        # The process is over at this point for the Rec Object
+        if self.is_done:
+            raise IndexError("ArtRecSystem session is over, rating out of range.")
+        self._validate_inputs(rating, freeze_elements, preference_weights)
 
-        self._validate_inputs(rating,
-                             freeze_elements,
-                             preference_weights)
-        
         # Save the current frozen elements and update with new ones
         old_frozen_elements = self._frozen_elements.copy()
         if freeze_elements:
@@ -232,9 +230,7 @@ class ArtRecSystem(GenRecSystem):
         # Update user preferences based on rating
         self._adjust_user_preference(rating)
         adjust_time = time.time() - start_time
-        print(
-            f"[{adjust_time:.2f}s] User preferences adjusted based on rating."
-        )
+        print(f"[{adjust_time:.2f}s] User preferences adjusted based on rating.")
 
         # Generate the next prompt based on updated preferences
         self._recommend_prompt()

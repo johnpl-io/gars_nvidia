@@ -2,7 +2,7 @@ import queue
 import torch
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
 from PIL import Image
-import cv2
+
 
 class MiniDiffusionPipeline:
     """
@@ -18,7 +18,7 @@ class MiniDiffusionPipeline:
         text2img (function): The method for text-to-image generation, either real or mock.
     """
 
-    def __init__(self, model_steps: int, mock: bool=False):
+    def __init__(self, model_steps: int, mock: bool = False):
         """
         Initializes the MiniDiffusionPipeline with specified model steps and mode (real or mock).
 
@@ -66,28 +66,41 @@ class MiniDiffusionPipeline:
         """
 
         ret = self._pipe(
-            prompt, num_inference_steps=self._inference_steps, guidance_scale=0,
+            prompt,
+            num_inference_steps=self._inference_steps,
+            guidance_scale=0,
             callback_on_step_end=self._decode_tensors,
             callback_on_step_end_tensor_inputs=["latents"],
         ).images[0]
 
         return ret
 
-    def _latents_to_rgb(self, latents):
-        weights = (
-            (60, -60, 25, -70),
-            (60, -5, 15, -50),
-            (60, 10, -5, -35)
+    def _latents_to_rgb(self, latents: torch.Tensor) -> Image.Image:
+        weights = ((60, -60, 25, -70), (60, -5, 15, -50), (60, 10, -5, -35))
+        weights_tensor = torch.t(
+            torch.tensor(weights, dtype=latents.dtype).to(latents.device)
         )
-        weights_tensor = torch.t(torch.tensor(weights, dtype=latents.dtype).to(latents.device))
-        biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(latents.device)
-        rgb_tensor = torch.einsum("...lxy,lr -> ...rxy", latents, weights_tensor) + biases_tensor.unsqueeze(
-            -1).unsqueeze(-1)
+        biases_tensor = torch.tensor((150, 140, 130), dtype=latents.dtype).to(
+            latents.device
+        )
+        rgb_tensor = torch.einsum(
+            "...lxy,lr -> ...rxy", latents, weights_tensor
+        ) + biases_tensor.unsqueeze(-1).unsqueeze(-1)
         image_array = rgb_tensor.clamp(0, 255)[0].byte().cpu().numpy()
-        image_array = image_array.transpose(1, 2, 0)
-        return cv2.resize(image_array, dsize=(1024, 1024), interpolation=cv2.INTER_CUBIC)
+        # Assuming image_array is a numpy array with shape (C, H, W)
+        image_array = image_array.transpose(1, 2, 0)  # Transpose to (H, W, C)
 
-    def _decode_tensors(self, pipe, step, timestep, callback_kwargs):
+        # Convert numpy array to PIL Image
+        image = Image.fromarray(image_array)
+
+        # Resize image to 1024x1024 using PIL
+        resized_image = image.resize((1024, 1024), Image.BICUBIC)
+
+        return resized_image
+
+    def _decode_tensors(
+        self, pipe: StableDiffusionXLPipeline, step: int, timestep: int, callback_kwargs
+    ):
         latents = callback_kwargs["latents"]
         image = self._latents_to_rgb(latents)
         self.latent_queue.put(image)
@@ -105,4 +118,3 @@ class MiniDiffusionPipeline:
             str: A URL pointing to a placeholder image.
         """
         return "https://fal-cdn.batuhan-941.workers.dev/files/koala/-CQBCeIxrvPqrvt4FDY5n.jpeg"
-

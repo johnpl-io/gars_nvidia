@@ -1,4 +1,5 @@
-from http.cookiejar import debug
+from pydoc import visiblename
+from signal import valid_signals
 
 import gradio as gr
 import os
@@ -6,14 +7,15 @@ from rec_system.art_rec import ArtRecSystem
 import queue
 
 
-class UI():
+class UI:
     def __init__(self):
-    # Global variables
+        # Global variables
         self.image_pipeline = None
         self.rec_system = None
         self.output_images = []  # Stores generated images throughout the session
-        self.dummy = False # Dummy flag for testing purposes
+        self.dummy = False  # Dummy flag for testing purposes
         self.validation_state = False  # Tracks if input validation is successful
+
     def build_ui(self):
         def check_preferences(element_checkboxes, element_preferences):
             """
@@ -30,7 +32,8 @@ class UI():
             if len(element_preferences) > 0:
                 return_list.append(element_preferences)
             return return_list
-        def gars_session_validation(iteration_count):
+
+        def gars_session_validation(iteration_count: int):
             """
             Validates the session configuration for the GARS system.
             Args:
@@ -48,16 +51,17 @@ class UI():
                 self.validation_state = False
             else:
                 self.validation_state = True
+
         def start_gars_session(
-                iteration_count,
-                sdxl_dropdown,
-                subjects_checkboxes,
-                custom_preference_subject,
-                styles_checkboxes,
-                custom_preference_style,
-                art_mediums_checkboxes,
-                custom_preference_medium,
-                progress=gr.Progress(track_tqdm=True),
+            iteration_count,
+            sdxl_dropdown,
+            subjects_checkboxes,
+            custom_preference_subject,
+            styles_checkboxes,
+            custom_preference_style,
+            art_mediums_checkboxes,
+            custom_preference_medium,
+            progress=gr.Progress(track_tqdm=True),
         ):
             """
             Starts a new GARS (Generative Art Recommendation System) session.
@@ -74,11 +78,18 @@ class UI():
             Returns:
                 dict: Updates UI elements based on session initialization.
             """
+            self.output_images = []
             gars_session_validation(iteration_count)
             initial_preferences = {
-                "subjects": check_preferences(subjects_checkboxes, custom_preference_subject),
-                "artists_movements": check_preferences(styles_checkboxes, custom_preference_style),
-                "art_mediums": check_preferences(art_mediums_checkboxes, custom_preference_medium),
+                "subjects": check_preferences(
+                    subjects_checkboxes, custom_preference_subject
+                ),
+                "artists_movements": check_preferences(
+                    styles_checkboxes, custom_preference_style
+                ),
+                "art_mediums": check_preferences(
+                    art_mediums_checkboxes, custom_preference_medium
+                ),
             }
             # Set diffusion steps based on dropdown selection
             diffusion_steps = 8
@@ -91,28 +102,27 @@ class UI():
                 total_iterations=iteration_count,
                 initial_preferences=initial_preferences,
                 diffusion_steps=diffusion_steps,
-                dummy=self.dummy
+                dummy=self.dummy,
             )
-            # Generate the first image
-            gen_img = self.rec_system(0.0)
-            self.output_images.append(gen_img)
+
             return {
                 initial_setup: gr.update(visible=False),
                 GARS: gr.update(visible=True),
-                advanced_checkbox: gr.update(visible=True),
-                output_image: gr.update(visible=True, value=gen_img),
-                output: "dummy",
+                output_image: gr.update(visible=True),
+                # Put blank value so loading bar will come up
+                output: "",
                 progress_bar: gr.update(visible=False),
                 restart_row: gr.update(visible=True),
-                rating_row: gr.update(visible=True)
+                rating_row: gr.update(visible=True),
             }
+
         def generate_rec(
-                rating,
-                subject_weight,
-                medium_weight,
-                style_weight,
-                modifiers_weight,
-                locked_elements
+            rating,
+            subject_weight,
+            medium_weight,
+            style_weight,
+            modifiers_weight,
+            locked_elements,
         ):
             """
             Generates a new recommendation based on user feedback and preferences.
@@ -126,7 +136,22 @@ class UI():
             Returns:
                 dict: Updates UI elements with the generated recommendation and gallery.
             """
-            lock_element_list = [elem.lower() for elem in locked_elements] if locked_elements else []
+            # map between ui "user friendly" names for prompt components and rec system names
+            rec_comp_map = {
+                "Modifiers": "modifiers",
+                "Medium": "art_mediums",
+                "Style": "artists_movements",
+                "Subject": "subjects",
+            }
+
+            lock_element_list = (
+                [rec_comp_map[elem] for elem in locked_elements]
+                if locked_elements
+                else []
+            )
+            # Ensure previous rating is not used during a restart
+            if self.rec_system._iteration == 0:
+                rating = 0
             gen_img = self.rec_system(
                 rating=rating,
                 preference_weights=[
@@ -140,7 +165,16 @@ class UI():
             self.output_images.append(gen_img)
             self.rec_system.diffusion_pipeline.latent_queue.put(0)
             row_visibility = not self.rec_system.is_done
-            return gen_img
+            return {
+                output_image: gen_img,
+                output_gallery: self.output_images,
+                advanced_checkbox_row: gr.update(visible=row_visibility),
+                rating_row: gr.update(visible=row_visibility),
+                rating_wrapper: gr.update(visible=True),
+                iteration_display: gr.update(visible=True),
+                gallery_row: gr.update(visible=not row_visibility),
+            }
+
         def show_latent():
             """
             Streams latent images for testing or live preview.
@@ -153,36 +187,38 @@ class UI():
             else:
                 while True:
                     try:
-                        print("Current items in queue:", list(self.rec_system.diffusion_pipeline.latent_queue.queue))
+                        print(
+                            "Current items in queue:",
+                            list(self.rec_system.diffusion_pipeline.latent_queue.queue),
+                        )
                         print("waiting for latent")
 
                         # Try to get an item without blocking
-                        item = self.rec_system.diffusion_pipeline.latent_queue.get()
-                        if isinstance(item, int):
+                        image = self.rec_system.diffusion_pipeline.latent_queue.get()
+                        if isinstance(image, int):
                             print("None found breaking!")
                             yield self.output_images[-1]
                             break
-                        yield item
+                        yield image
 
                         # If item is None, break out of the loop
 
-
                         # Process the item
-
 
                         print("got latent!")
 
                     except queue.Empty:
                         print("Queue is empty, retrying...")
 
-        def update_iteration():
+        def update_iteration() -> str:
             """
             Provides current iteration status in the GARS session.
             Returns:
                 str: Formatted iteration status.
             """
             return f"## Iteration: {self.rec_system._iteration} / {self.rec_system._total_iterations}"
-        def show_advanced(status):
+
+        def show_advanced(status: bool) -> dict:
             """
             Toggles the advanced options tab visibility.
             Args:
@@ -191,23 +227,26 @@ class UI():
                 dict: Updates UI visibility of the advanced tab.
             """
             return {advanced_tab: gr.update(visible=status)}
+
         def restart_session():
             """
             Restarts the GARS session, resetting output images and UI elements.
             Returns:
                 dict: UI reset to initial setup visibility.
             """
-            self.output_images = []
             return {
                 initial_setup: gr.update(visible=True),
                 GARS: gr.update(visible=False),
-                advanced_checkbox: gr.update(visible=False),
                 advanced_tab: gr.update(visible=False),
+                advanced_checkbox_row: gr.update(visible=False),
+                rating_wrapper: gr.update(visible=False),
                 output_image: None,
                 output_gallery: gr.update(visible=False),
                 gallery_row: gr.update(visible=False),
-                restart_row: gr.update(visible=False)
+                restart_row: gr.update(visible=False),
+                iteration_display: gr.update(visible=False),
             }
+
         def show_progress(iteration_count):
             """
             Validates iteration count and toggles progress bar visibility accordingly.
@@ -226,6 +265,7 @@ class UI():
                 progress_bar: gr.update(visible=True),
                 initial_setup: gr.update(visible=False),
             }
+
         def show_gallery():
             """
             Displays the output gallery and hides other UI elements.
@@ -237,8 +277,9 @@ class UI():
                 gallery_row: gr.update(visible=False),
                 output_image: gr.update(visible=False),
                 advanced_checkbox: gr.update(visible=False),
-                advanced_tab: gr.update(visible=False)
+                advanced_tab: gr.update(visible=False),
             }
+
         green_custom = gr.themes.utils.colors.Color(
             name="green_custom",
             c50="#e0ff00",
@@ -265,9 +306,15 @@ class UI():
                 with gr.Column("initial setup wrapper") as initial_setup:
                     with gr.Tab("Initial Setup", visible=True):
                         iteration_count = gr.Slider(
-                            label="Iteration Count", value=15, minimum=10, maximum=100, step=1
+                            label="Iteration Count",
+                            value=15,
+                            minimum=10,
+                            maximum=100,
+                            step=1,
                         )
-                        with gr.Accordion("Advanced Preferences (optional)", open=False):
+                        with gr.Accordion(
+                            "Advanced Preferences (optional)", open=False
+                        ):
                             gr.Markdown("Selection Preferences")
                             subjects_checkboxes = gr.CheckboxGroup(
                                 [
@@ -301,7 +348,7 @@ class UI():
                                     "Fashion",
                                     "Travel",
                                 ],
-                                label="Subjects"
+                                label="Subjects",
                             )
                             custom_preference_subject = gr.Textbox(
                                 show_label=False, placeholder="Custom Subject"
@@ -319,7 +366,7 @@ class UI():
                                     "Metalwork",
                                     "Printmaking",
                                 ],
-                                label="Mediums"
+                                label="Mediums",
                             )
                             custom_preference_medium = gr.Textbox(
                                 show_label=False, placeholder="Custom Medium"
@@ -337,7 +384,7 @@ class UI():
                                     "Expressionism",
                                     "Minimalism",
                                 ],
-                                label="Styles"
+                                label="Styles",
                             )
                             custom_preference_style = gr.Textbox(
                                 show_label=False, placeholder="Custom Style"
@@ -350,18 +397,26 @@ class UI():
                                 ],
                                 label="Model",
                                 value="SDXL Lightning [8 Step]",
-                                interactive=True
+                                interactive=True,
                             )
-                        submit_btn = gr.Button("Submit", elem_id = "submit-button")
+                        submit_btn = gr.Button("Submit", elem_id="submit-button")
                 with gr.Column("Out", visible=False) as progress_bar:
-                    with gr.Tab("out", visible=True):
-                        output = gr.Textbox(label="Loading Model...", placeholder="Waiting on preference", visible=True)
+                    with gr.Tab("Loading Model...", visible=True):
+                        output = gr.Textbox(
+                            label="Loading Model...",
+                            placeholder="Waiting on preference",
+                            visible=True,
+                        )
                 with gr.Column("GARS", visible=False) as GARS:
                     with gr.Tab("GARS"):
-                        iteration_display = gr.Markdown("## Iteration: ", visible=True)
-                        with gr.Row(visible=True, elem_id = "start-over-button") as restart_row:
+                        iteration_display = gr.Markdown("", visible=False)
+                        with gr.Row(
+                            visible=True, elem_id="start-over-button"
+                        ) as restart_row:
                             restart_btn = gr.Button("Start Over", scale=0)
-                        output_image = gr.Image(streaming=not self.dummy, label="Output Image", visible=True)
+                        output_image = gr.Image(
+                            streaming=not self.dummy, label="Output Image", visible=True
+                        )
                         output_gallery = gr.Gallery(
                             label="Generated images",
                             show_label=False,
@@ -371,18 +426,30 @@ class UI():
                             visible=False,
                         )
                         with gr.Row(visible=True) as rating_row:
-                            rating = gr.Slider(
-                                -1, 1, value=0, label="Rating", minimum=-1, maximum=1, scale=3
-                            )
-                            generate_btn = gr.Button("Generate", scale=1, elem_id="generate-button")
+                            with gr.Column(visible=False) as rating_wrapper:
+                                rating = gr.Slider(
+                                    -1,
+                                    1,
+                                    value=0,
+                                    label="Rating",
+                                    minimum=-1,
+                                    maximum=1,
+                                    scale=3
+                                )
+                            with gr.Column(visible=True):
+                                generate_btn = gr.Button(
+                                    "Generate", scale=1, elem_id="generate-button"
+                                )
                         with gr.Row(visible=False) as gallery_row:
-                            gallery_submit = gr.Button("Show Gallery", elem_id="show-gallery-button")
+                            gallery_submit = gr.Button(
+                                "Show Gallery", elem_id="show-gallery-button"
+                            )
                 with gr.Column("Settings", visible=False) as advanced_tab:
                     with gr.Tab("Advanced Options"):
                         gr.Markdown(" Lock Elements")
                         locked_elements = gr.CheckboxGroup(
                             ["Subject", "Medium", "Style", "Modifiers"],
-                            show_label=False
+                            show_label=False,
                         )
                         gr.Markdown(" Adjust Element Weights")
                         with gr.Group():
@@ -422,13 +489,18 @@ class UI():
                                 maximum=1,
                                 interactive=True,
                             )
-            advanced_checkbox = gr.Checkbox(
-                label="Advanced", visible=False, interactive=True, container=False
-            )
+            with gr.Row(visible=False) as advanced_checkbox_row:
+                advanced_checkbox = gr.Checkbox(
+                    label="Advanced", interactive=True, container=False
+                )
             advanced_checkbox.change(
-                show_advanced, inputs=advanced_checkbox, outputs=advanced_tab
+                fn=show_advanced, inputs=advanced_checkbox, outputs=advanced_tab
             )
-            submit_btn.click(fn=show_progress, inputs = [iteration_count], outputs=[progress_bar, initial_setup])
+            submit_btn.click(
+                fn=show_progress,
+                inputs=[iteration_count],
+                outputs=[progress_bar, initial_setup],
+            )
             submit_btn.click(
                 fn=start_gars_session,
                 inputs=[
@@ -444,20 +516,16 @@ class UI():
                 outputs=[
                     initial_setup,
                     GARS,
-                    advanced_checkbox,
                     output_image,
                     iteration_display,
                     output_image,
                     output,
                     progress_bar,
                     restart_row,
-                    rating_row
+                    rating_row,
                 ],
             )
-            generate_btn.click(
-                fn=show_latent,
-                outputs=[output_image]
-            )
+            generate_btn.click(fn=show_latent, outputs=[output_image])
             generate_btn.click(
                 fn=generate_rec,
                 inputs=[
@@ -466,14 +534,14 @@ class UI():
                     medium_weight,
                     style_weight,
                     modifiers_weight,
-                    locked_elements
+                    locked_elements,
                 ],
-                outputs=[output_image],
+
+                outputs=[output_image, output_gallery, advanced_checkbox_row, rating_row, rating_wrapper, gallery_row, iteration_display],
             )
-            output_image.change(fn=update_iteration, outputs=[iteration_display])
             restart_btn.click(
                 fn=restart_session,
-                outputs = [
+                outputs=[
                     initial_setup,
                     GARS,
                     advanced_checkbox,
@@ -481,11 +549,23 @@ class UI():
                     output_image,
                     output_gallery,
                     gallery_row,
-                    restart_row
-                    ]
+                    rating_wrapper,
+                    advanced_checkbox_row,
+                    iteration_display,
+                    restart_row,
+                ],
             )
+            output_image.change(fn=update_iteration, outputs=[iteration_display])
+
             gallery_submit.click(
-                fn=show_gallery, outputs=[gallery_row, output_gallery, output_image, advanced_checkbox, advanced_tab]
+                fn=show_gallery,
+                outputs=[
+                    gallery_row,
+                    output_gallery,
+                    output_image,
+                    advanced_checkbox,
+                    advanced_tab,
+                ],
             )
             demo.launch(server_name="0.0.0.0", server_port=8080, root_path=proxy_prefix)
 

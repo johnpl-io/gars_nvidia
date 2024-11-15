@@ -81,8 +81,7 @@ class VectorDBManager:
             List[Dict]: The search results containing the nearest neighbors as a list
             of dictionaries with vector data and metadata.
         """
-        # Initialize the collection and set search parameters
-        collection = Collection(collection_name)
+
         search_params = {
             "metric_type": self._params["metric_type"],
             "params": {},

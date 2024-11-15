@@ -14,7 +14,9 @@ class GenRecSystem(ABC):
     process.
     """
 
-    _params: dict  # Parameters specific to the recommendation system, defined in subclasses.
+    _params: (
+        dict  # Parameters specific to the recommendation system, defined in subclasses.
+    )
 
     def __init__(
         self,
@@ -69,9 +71,7 @@ class GenRecSystem(ABC):
             self._update_frozen_elements()
 
         # Initialize the diffusion pipeline for image generation
-        self.diffusion_pipeline = MiniDiffusionPipeline(
-            diffusion_steps, mock=dummy
-        )
+        self.diffusion_pipeline = MiniDiffusionPipeline(diffusion_steps, mock=dummy)
 
     def _update_frozen_elements(self):
         """
@@ -118,6 +118,8 @@ class GenRecSystem(ABC):
                 embedding = np.asarray(response.data[0].embedding)
                 # Initialize the user's latent vector as a combination of the embeddings
                 # obtained from their preferences
+                print(f"Loading preference of {term} for {prompt_category}")
+
                 self._cur_user_embedding[index] += (
                     embedding * self._params["initialize_weight"]
                 )
