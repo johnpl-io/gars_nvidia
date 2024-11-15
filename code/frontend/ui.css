@@ -17,11 +17,11 @@ button {
 }
 
 #start-over-button button {
-    background-color: #4CAF50; /* Green background */
+    background-color: #76B900; /* Green background */
 }
 
 #start-over-button button:hover {
-    background-color: #45a049;
+    background-color: #76B900;
     transform: scale(1.05);
 }
 
@@ -38,16 +38,16 @@ button {
 
 /* Submit Button */
 #submit-button {
-    background-color: #28a745; /* Green background */
+    background-color: #76B900; /* Green background */
 }
 
 #submit-button:hover {
-    background-color: #218838;
+    background-color: #76B900;
     transform: scale(1.05);
 }
 
 #submit-button:active {
-    background-color: #1e7e34;
+    background-color: #76B900;
     transform: scale(0.98);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -59,11 +59,11 @@ button {
 
 /* Generate Button */
 #generate-button {
-    background-color: #007BFF; /* Blue background */
+    background-color: #76b900; /* Blue background */
 }
 
 #generate-button:hover {
-    background-color: #0056b3;
+    background-color: #76B900;
     transform: scale(1.05);
 }
 
