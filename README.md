@@ -20,7 +20,7 @@
 
 GARS is a generative art recommendation system that generates personalized artwork by adapting to individual user preferences and iteratively refining each piece based on real-time feedback to create a unique and evolving art experience. Currently, the nature of the interaction between users and most generative art models is much like that between an artist and a commissioner in that the user instructs the model on what to create and the model creates it while taking some liberties. While this form of interaction can be useful, it has certain limitations. First, being able to articulate your preferences effectively to the model requires considerable expertise in prompt engineering and a great deal of familiarity with all of the quirks associated with a specific model. Moreover, we believe that it is ineffective if the user's goal is to explore and expand their interests or if more generally, they don't know what they like. GARS radically transforms this dynamic and in so doing, empowers users, especially those with minimal experience in generative models, to efficiently navigate and explore the vast space of artworks available to them.
 
-## GARS in Action
+### GARS in Action
 
 https://github.com/user-attachments/assets/dea18c52-e8e4-42af-a464-a50dad21af9a
 
