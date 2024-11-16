@@ -13,7 +13,6 @@ class UI:
         self.image_pipeline = None
         self.rec_system = None
         self.output_images = []  # Stores generated images throughout the session
-        self.dummy = False  # Dummy flag for testing purposes
         self.validation_state = False  # Tracks if input validation is successful
 
     def build_ui(self):
@@ -33,7 +32,7 @@ class UI:
                 return_list.append(element_preferences)
             return return_list
 
-        def gars_session_validation(iteration_count: int):
+        def gars_session_validation(iteration_count):
             """
             Validates the session configuration for the GARS system.
             Args:
@@ -102,7 +101,6 @@ class UI:
                 total_iterations=iteration_count,
                 initial_preferences=initial_preferences,
                 diffusion_steps=diffusion_steps,
-                dummy=self.dummy,
             )
 
             return {
@@ -181,36 +179,19 @@ class UI:
             Yields:
                 str: URL of the dummy image if in dummy mode, otherwise streams from the diffusion queue.
             """
-            print("got to latent")
-            if self.dummy:
-                yield "https://fal-cdn.batuhan-941.workers.dev/files/koala/-CQBCeIxrvPqrvt4FDY5n.jpeg"
-            else:
-                while True:
-                    try:
-                        print(
-                            "Current items in queue:",
-                            list(self.rec_system.diffusion_pipeline.latent_queue.queue),
-                        )
-                        print("waiting for latent")
 
-                        # Try to get an item without blocking
-                        image = self.rec_system.diffusion_pipeline.latent_queue.get()
-                        if isinstance(image, int):
-                            print("None found breaking!")
-                            yield self.output_images[-1]
-                            break
-                        yield image
+            while True:
+                try:
+                    image = self.rec_system.diffusion_pipeline.latent_queue.get()
 
-                        # If item is None, break out of the loop
+                    if isinstance(image, int):
+                        yield self.output_images[-1]
+                        break
+                    yield image
+                except queue.Empty:
+                    print("Queue is empty, retrying...")
 
-                        # Process the item
-
-                        print("got latent!")
-
-                    except queue.Empty:
-                        print("Queue is empty, retrying...")
-
-        def update_iteration() -> str:
+        def update_iteration():
             """
             Provides current iteration status in the GARS session.
             Returns:
@@ -218,7 +199,7 @@ class UI:
             """
             return f"## Iteration: {self.rec_system._iteration} / {self.rec_system._total_iterations}"
 
-        def show_advanced(status: bool) -> dict:
+        def show_advanced(status):
             """
             Toggles the advanced options tab visibility.
             Args:
@@ -415,7 +396,7 @@ class UI:
                         ) as restart_row:
                             restart_btn = gr.Button("Start Over", scale=0)
                         output_image = gr.Image(
-                            streaming=not self.dummy, label="Output Image", visible=True
+                            streaming=True, label="Output Image", visible=True
                         )
                         output_gallery = gr.Gallery(
                             label="Generated images",

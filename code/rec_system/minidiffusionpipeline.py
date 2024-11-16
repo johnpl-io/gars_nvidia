@@ -26,10 +26,8 @@ class MiniDiffusionPipeline:
             model_steps (int): The number of inference steps for the diffusion model.
             mock (bool): If True, uses a mock function for text-to-image generation, else uses the real model.
         """
-        if not mock:
-            # Set inference steps and initialize the Stable Diffusion pipeline with specified steps
-            self._inference_steps = model_steps
-            self._pipe = StableDiffusionXLPipeline.from_single_file(
+        self._inference_steps = model_steps
+        self._pipe = StableDiffusionXLPipeline.from_single_file(
                 f"https://huggingface.co/ByteDance/SDXL-Lightning/blob/main/sdxl_lightning_{self._inference_steps}step.safetensors",
                 torch_dtype=torch.float16,
                 use_safetensors=True,
@@ -37,24 +35,20 @@ class MiniDiffusionPipeline:
             )
 
             # Enable CPU offload to optimize memory usage during inference
-            self._pipe.enable_model_cpu_offload()
+        self._pipe.enable_model_cpu_offload()
 
             # Set up the scheduler for handling model timesteps with Euler discretization
-            self._pipe.scheduler = EulerDiscreteScheduler.from_config(
-                self._pipe.scheduler.config, timestep_spacing="trailing"
+        self._pipe.scheduler = EulerDiscreteScheduler.from_config(
+            self._pipe.scheduler.config, timestep_spacing="trailing"
             )
 
             # Set real text-to-image function
-            self.text2img = self._txt2imgreal
-            self._latent_img = []
-            self.is_gen_queue = queue.Queue()
-            self.latent_queue = queue.Queue()
-            self._current_step = 0
-        else:
-            # Use mock function for text-to-image when mock mode is enabled
-            self.text2img = self._txt2imgmock
+        self._latent_img = []
+        self.is_gen_queue = queue.Queue()
+        self.latent_queue = queue.Queue()
+        self._current_step = 0
 
-    def _txt2imgreal(self, prompt: str) -> Image.Image:
+    def text2img(self, prompt: str) -> Image.Image:
         """
         Generates an image from the provided text prompt using the real Stable Diffusion pipeline.
 
@@ -65,7 +59,7 @@ class MiniDiffusionPipeline:
             PIL.Image.Image: The generated image.
         """
 
-        ret = self._pipe(
+        return self._pipe(
             prompt,
             num_inference_steps=self._inference_steps,
             guidance_scale=0,
@@ -73,7 +67,8 @@ class MiniDiffusionPipeline:
             callback_on_step_end_tensor_inputs=["latents"],
         ).images[0]
 
-        return ret
+    # Thanks to https://huggingface.co/blog/TimothyAlexisVass/explaining-the-sdxl-latent-space
+    # which we use here to help decode latents
 
     def _latents_to_rgb(self, latents: torch.Tensor) -> Image.Image:
         weights = ((60, -60, 25, -70), (60, -5, 15, -50), (60, 10, -5, -35))
@@ -106,15 +101,3 @@ class MiniDiffusionPipeline:
         self.latent_queue.put(image)
         self._current_step = step
         return callback_kwargs
-
-    def _txt2imgmock(self, prompt: str) -> str:
-        """
-        Returns a placeholder image URL for mock functionality.
-
-        Args:
-            prompt (str): The text prompt for generating the mock image.
-
-        Returns:
-            str: A URL pointing to a placeholder image.
-        """
-        return "https://fal-cdn.batuhan-941.workers.dev/files/koala/-CQBCeIxrvPqrvt4FDY5n.jpeg"
