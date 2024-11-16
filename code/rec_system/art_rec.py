@@ -28,7 +28,6 @@ class ArtRecSystem(GenRecSystem):
         user_sample_stage_size: int = 3,
         max_jump: float = 1e-3,
         diffusion_steps: int = 2,
-        dummy=False,
     ):
         """
         Initialize the Art Recommendation System with user preferences, system parameters,
@@ -43,7 +42,6 @@ class ArtRecSystem(GenRecSystem):
             user_sample_stage_size (int): Initial number of iterations to perform user sampling. Default is 3.
             max_jump (float): Maximum step size for updating user embeddings. Default is 1e-3.
             diffusion_steps (int): Number of diffusion steps for image generation. Default is 2.
-            dummy (bool): Whether to use a mock diffusion model for testing. Default is False.
         """
         # Load parameters from external configuration file
         with open(os.path.join("..", "config", "db_config.json")) as f:
@@ -57,7 +55,6 @@ class ArtRecSystem(GenRecSystem):
             max_jump=max_jump,
             user_sample_stage_size=user_sample_stage_size,
             diffusion_steps=diffusion_steps,
-            dummy=dummy,
         )
 
         self.is_done = False  # Flag to determine if recommendation session is complete

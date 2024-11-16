@@ -28,7 +28,6 @@ class GenRecSystem(ABC):
         max_jump: float,
         user_sample_stage_size: int,
         diffusion_steps: int,
-        dummy: bool,
     ) -> None:
         """
         Initializes the recommendation system with user preferences and configurations.
@@ -42,7 +41,6 @@ class GenRecSystem(ABC):
             max_jump (float): Maximum allowed change in user's prompt vector per iteration.
             user_sample_stage_size (int): Number of initial iterations to randomly generate images to get a sense of user's preferences before beginning recommendations.
             diffusion_steps (int): Number of steps for diffusion-based image generation.
-            dummy (bool): Whether to use a dummy model for testing.
         """
 
         # Initialize core parameters and variables for recommendation process
@@ -51,7 +49,6 @@ class GenRecSystem(ABC):
         self._max_jump = max_jump
         self._total_iterations = total_iterations
         self._user_sample_stage_size = user_sample_stage_size
-        self._dummy = dummy  # Flag to use a dummy model for testing
 
         # Load prompt elements and embedding size from configuration parameters
         self._prompt_elements = self._params["prompt_elements"]
@@ -71,7 +68,7 @@ class GenRecSystem(ABC):
             self._update_frozen_elements()
 
         # Initialize the diffusion pipeline for image generation
-        self.diffusion_pipeline = MiniDiffusionPipeline(diffusion_steps, mock=dummy)
+        self.diffusion_pipeline = MiniDiffusionPipeline(diffusion_steps)
 
     def _update_frozen_elements(self):
         """
