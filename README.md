@@ -77,6 +77,8 @@ web browser and use GARS accordingly.
 4. The first run will take a while (~5-7 min) the model will be downloaded from hugging face. 
 Subsequent runs with that model will be fast as the model will be cached and caching is persistent across runs.
 
+![Screenshot from 2024-11-15 01-36-22](https://github.com/user-attachments/assets/14551084-29d8-4a3c-bbe4-69e654ce2f75)
+
 
 
 
