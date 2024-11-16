@@ -31,8 +31,7 @@ One challenge that we faced was that in most recommendation systems, the set of 
 
 The workflow begins by allowing users to start a recommendation system by offering optional preferences, model configuration, and iteration count. By setting optional preferences, the user can strongly bias the system towards recommending artworks aligning with those preferences. In choosing the model used to generate the artworks, there is generally a tradeoff between time taken to generate and the quality of the generated artwork where models with fewer diffusion steps are very fast at the expense of sacrificing some quality. Finally, the iteration count determines how many recommendations the system will provide during a GARS session. Generally these sessions are designed so that the system converges to a specific image by the end of a session. In our experience, 15 to 25 iterations seem to provide the best experience to users but this isn't something that we have extensively tested.
 
-![Screenshot 2024-11-14 220902](https://github.com/user-attachments/assets/85c6a65f-ff50-466d-add8-9a8d09365de0)
-
+![image](https://github.com/user-attachments/assets/49dcc442-d94f-4183-854d-f31e478d1c11)
 
 Once the user begins the recommendation session, they will be presented with images which they can rate from -1 to 1. Users can also optionally provide additional control to the recommendation by adjusting prompt component weights and freezing elements entirely.
 
