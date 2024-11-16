@@ -11,6 +11,10 @@
 
 # Introduction
 
+
+https://github.com/user-attachments/assets/3194ab21-a78a-4ec7-a0c7-e30c39d5f122
+
+
 GARS is a generative art recommendation system that generates personalized artwork by adapting to individual user preferences and iteratively refining each piece based on real-time feedback to create a unique and evolving art experience. Currently, the nature of the interaction between users and most generative art models is much like that between an artist and a commissioner in that the user instructs the model on what to create and the model creates it while taking some liberties. While this form of interaction can be useful, it has certain limitations. First, being able to articulate your preferences effectively to the model requires considerable expertise in prompt engineering and a great deal of familiarity with all of the quirks associated with a specific model. Moreover, we believe that it is ineffective if the user's goal is to explore and expand their interests or if more generally, they don't know what they like. GARS radically transforms this dynamic and in so doing, empowers users, especially those with minimal experience in generative models, to efficiently navigate and explore the vast space of artworks available to them.
 
 
@@ -25,12 +29,14 @@ The workflow begins by allowing users to start a recommendation system by offeri
 
 Once the user begins the recommendation session, they will be presented with images which they can rate from -1 to 1. Users can also optionally provide additional control to the recommendation by adjusting prompt component weights and freezing elements entirely.
 
-![Screenshot 2024-11-14 222609](https://github.com/user-attachments/assets/4a60812a-47df-4279-b367-3cf5d5086234)
+![Screenshot from 2024-11-15 18-59-48](https://github.com/user-attachments/assets/0acc8829-1cfb-41c7-89d3-5af4d15f91a9)
+
 
 
 When the session is complete, a gallery view of all the generated images is provided where the user has the option to download and save the ones they liked the most. Additionally, the user also has the option to start over and begin a new session.
 
-<img width="685" alt="image" src="https://github.com/user-attachments/assets/55a7a2b6-5319-4c37-ac5b-51b447c86582">
+![Screenshot from 2024-11-15 19-03-14](https://github.com/user-attachments/assets/727b471a-ad41-4b8e-8de3-2a3cb20e07a9)
+
 
 
 During the entire session, users can also look at the terminal for logging information where they will see things such as the prompt used to generate their image as well as the amount of time taken to recommend the image.
@@ -46,24 +52,33 @@ To efficiently recommend images to the user, we encoded the user's preference as
 
 To generate the images we used ...
 GARS works as a generative image diffusion model design tool. GARS takes advantage of fast 
-SDXL (Stable Diffusion XL) Lightning models and CPU offloading to allow for seamless use 
-on a Nvidia RTX 3070 Ti. 
+SDXL (Stable Diffusion XL) Lightning models to allow for seamless use 
+on a Nvidia RTX 3070 Ti a consumer grade GPU. Through the use of CPU offloading, we were able to allow to model to be efficiently fit in and swapped into GPU memory when needed. 
+Since we are running fully locally, we are able to get additional features, such as loading and decoding latent representation of images in real time. To do so 
+we created a queue that communicates across threads to pipe data to the frontend. 
 
-We chose to use the Flask to communicate between our backend and frontend as it is very lightweight and flexible which makes it ideal for providing rapid recommendations to the user.
+We chose to use the Gradio to communicate between our backend and frontend as it is very lightweight and flexible which makes it ideal for providing rapid recommendations to the user.
 
 Finally, for our user interface, we chose Gradio because of its seamless integration with the diffusion models we utilized. This allows for quick and efficient interactions, enabling users to easily explore and refine image generation in real-time. Gradio's flexibility made it simple to display results and manage inputs, streamlining the entire user experience.
 
 ## Getting Started
-- Clone the project and add OPENAI_API_KEY as a secret. Note: the OpenAI() api was used to create embeddings for preferences and not 
+
+1. Clone the project and add OPENAI_API_KEY as a secret. Note: the OpenAI() api was used to create embeddings for preferences and not 
 for image generation. In addition, there is a gars.db container that contains word embeddings created using OpenAI's API.
-This was done to not make the user load word embeddings into the database manually. 
-- If anything fails with loading the database, you can manually run python3 -m db.init_db within gars_nvidia/code to take embeddings contained within a .npy file and load them into the database.
-- Go to Applications and start up the Gars-frotend. From there you join the Gradio frontend from a 
-web browser and use GARS accordingly. *Note the first time may take a while for the diffusion model to download
-from Hugging Face, but subsequent launches should be much faster.
+This was done to not make the user load word embeddings into the database manually.
+
+3. Go to Applications and start up the Gars-frotend. From there you join the Gradio frontend from a 
+web browser and use GARS accordingly.
+
+![image](https://github.com/user-attachments/assets/a97387a3-2cd0-48f4-a269-16950c58edc1)
+![image](https://github.com/user-attachments/assets/fa8e7039-c712-491b-8714-9e09cf8a8c8d)
+
+4. The first run will take a while (~5-7 min) the model will be downloaded from hugging face. 
+Subsequent runs with that model will be fast as the model will be cached and caching is persistent across runs.
 
 ## Hardware Used
 - OS: Ubuntu 22.04.5 LTS x86_64 
 - GPU: NVIDIA GeForce RTX 3070 Ti
 - CPU: AMD Ryzen 7 5800X (16) @ 3.800G
 - Memory: 32014MiB
+- Web Browser: Google Chrome
