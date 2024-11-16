@@ -72,13 +72,12 @@ This was done to not make the user load word embeddings into the database manual
 3. Go to Applications and start up the Gars-frotend. From there you join the Gradio frontend from a 
 web browser and use GARS accordingly.
 
-![image](https://github.com/user-attachments/assets/a97387a3-2cd0-48f4-a269-16950c58edc1)
-![image](https://github.com/user-attachments/assets/fa8e7039-c712-491b-8714-9e09cf8a8c8d)
+![image](https://github.com/user-attachments/assets/c68f97ce-3437-41b9-8f67-995ef05b96a9)
 
 4. The first run will take a while (~5-7 min) the model will be downloaded from hugging face. 
 Subsequent runs with that model will be fast as the model will be cached and caching is persistent across runs.
 
-![image](https://github.com/user-attachments/assets/c68f97ce-3437-41b9-8f67-995ef05b96a9)
+
 
 
 ## Hardware Used 
