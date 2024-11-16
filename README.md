@@ -52,8 +52,7 @@ To efficiently recommend images to the user, we encoded the user's preference as
 
  In many recommendation systems, there is a balancing act between exploration and exploitation, where the system must decide whether to explore new options to discover potentially better recommendations or exploit known preferences to provide the most relevant and satisfying choices to the user. For our recommendation system, we achieved this balance by instead of recommending the most similar prompt component recommended to the user, randomly sampling from the top k most similar prompt components to recommend to the user. The idea behind this is that as the session continues, k will decrease so that in the beginning the system will attempt to explore more of the space. But as time goes on and it becomes more confident in the model it has developed of the user's preferences, it will decrease k and provide more precise recommendations to the user. 
 
-To generate the images we used ...
-GARS works as a generative image diffusion model design tool. GARS takes advantage of fast 
+To generate the images GARS takes advantage of fast 
 SDXL (Stable Diffusion XL) Lightning models to allow for seamless use 
 on a Nvidia RTX 3070 Ti a consumer grade GPU. Through the use of CPU offloading, we were able to allow to model to be efficiently fit in and swapped into GPU memory when needed. 
 Since we are running fully locally, we are able to get additional features, such as loading and decoding latent representation of images in real time. To do so 
