@@ -11,14 +11,9 @@
 
 # Introduction
 
-
-
-
-
-
-
-
 GARS is a generative art recommendation system that generates personalized artwork by adapting to individual user preferences and iteratively refining each piece based on real-time feedback to create a unique and evolving art experience. Currently, the nature of the interaction between users and most generative art models is much like that between an artist and a commissioner in that the user instructs the model on what to create and the model creates it while taking some liberties. While this form of interaction can be useful, it has certain limitations. First, being able to articulate your preferences effectively to the model requires considerable expertise in prompt engineering and a great deal of familiarity with all of the quirks associated with a specific model. Moreover, we believe that it is ineffective if the user's goal is to explore and expand their interests or if more generally, they don't know what they like. GARS radically transforms this dynamic and in so doing, empowers users, especially those with minimal experience in generative models, to efficiently navigate and explore the vast space of artworks available to them.
+
+GARS works fully within the NVIDIA AI Workbench and can on a consumer grade NVIDIA GPU. 
 
 ### GARS in Action
 
@@ -45,9 +40,10 @@ When the session is complete, a gallery view of all the generated images is prov
 
 
 
-During the entire session, users can also look at the terminal for logging information where they will see things such as the prompt used to generate their image as well as the amount of time taken to recommend the image.
+During the entire session, users can also look at the terminal directly within the NVIDIA AI Workbench for logging information where they will see things such as the prompt used to generate their image as well as the amount of time taken to recommend the image.
 
-<img width="851" alt="image" src="https://github.com/user-attachments/assets/db6f0e82-9f55-494b-98b4-9235e426f830">
+![image](https://github.com/user-attachments/assets/828d6f9c-3183-4143-9e9d-6b1fd0fcba6d)
+
 
 
 ## Technical Details
