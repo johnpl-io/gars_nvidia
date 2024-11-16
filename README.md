@@ -78,7 +78,10 @@ web browser and use GARS accordingly.
 4. The first run will take a while (~5-7 min) the model will be downloaded from hugging face. 
 Subsequent runs with that model will be fast as the model will be cached and caching is persistent across runs.
 
-## Hardware Used
+## Hardware Used 
+
+This is the only hardware and software that was tested in which the NVIDIA AI Workbench was used on. While these are not preset requirements, we do not gurantee that GARS will work on a GPU with less VRAM. We estimate around 8 gb of VRAM is most likely required for a smooth experience.
+
 - OS: Ubuntu 22.04.5 LTS x86_64 
 - GPU: NVIDIA GeForce RTX 3070 Ti
 - CPU: AMD Ryzen 7 5800X (16) @ 3.800G
